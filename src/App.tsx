@@ -17,6 +17,7 @@ import TermsPolicy from "./pages/client/terms-policy";
 import BuyingGuide from "./pages/client/buying-guide";
 import PaymentPolicy from "./pages/client/payment-policy";
 import ReturnPolicy from "./pages/client/return-policy";
+import VerifyAccount from "./pages/client/verifyAccount";
 
 function App() {
   const DetailProductWrapper = () => {
@@ -30,6 +31,7 @@ function App() {
     { path: "/", element: <Home /> },
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
+    { path: "/verify-account", element: <VerifyAccount /> },
     { path: "/terms-policy", element: <TermsPolicy /> },
     { path: "/buying-guide", element: <BuyingGuide /> },
     { path: "/payment-policy", element: <PaymentPolicy /> },
