@@ -98,10 +98,10 @@ const Register = () => {
   // Mutation để gửi dữ liệu đăng ký
   const mutation = useMutation<RegisterForm, AxiosError<ErrorResponse>, any>({
     mutationFn: register,
-    onSuccess: () => {
+    onSuccess: (_,variables) => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success("Đăng ký thành công");
-      navigate("/login");
+      navigate("/verify-account", { state: { email: variables.email } });
     },
     onError: (error) => {
       const errorData = error.response?.data;
@@ -502,6 +502,7 @@ const Register = () => {
                   type="submit"
                   // mutation.isPending là trạng thái đang gửi, có thể thay thế bằng isLoading nếu có
                   className="w-full py-3 px-4 bg-black text-white font-semibold text-lg rounded-br-2xl rounded-tl-2xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  
                 >
                   Đăng ký
                 </button>

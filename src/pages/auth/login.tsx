@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/auth.context"; // Import useAuth
+import { STATUS_CODES } from "http";
 
 const Login = () => {
   const [formData, setFormData] = useState<LoginType>({
@@ -50,19 +51,31 @@ const Login = () => {
       }, 2000);
     },
     onError: (err) => {
-      if (axios.isAxiosError(err) && err.response) {
-        const errorData = err.response.data as { errors?: string[] };
-        const errorMessage = errorData.errors?.[0] || "Đăng nhập thất bại!";
-        toast.error(errorMessage);
+  if (axios.isAxiosError(err) && err.response) {
+    const status = err.response.status;
+    const errorData = err.response.data as { errors?: string[]; message?: string; email?: string };
+    const errorMessage = errorData?.message || "Đăng nhập thất bại!";
 
-        setErrors({
-          email: errorMessage.includes("email") ? errorMessage : "",
-          password: errorMessage.includes("mật khẩu") ? errorMessage : "",
-        });
-      } else {
-        toast.error("Có lỗi xảy ra. Vui lòng kiểm tra kết nối!");
-      }
-    },
+    if (status === 402) {
+      // Nếu BE trả về email trong response
+      const email = errorData.email || ""; 
+      console.log("Email from server:", email);
+      navigate("/verify-account", { state: { email } }); // hoặc query string nếu thích
+      toast.info("Tài khoản chưa xác thực. Vui lòng kiểm tra email.");
+      return;
+    }
+    console.log("Login error:", err.response);
+    toast.error(errorMessage);
+
+    setErrors({
+      email: errorMessage.includes("email") ? errorMessage : "",
+      password: errorMessage.includes("mật khẩu") ? errorMessage : "",
+    });
+  } else {
+    toast.error("Có lỗi xảy ra. Vui lòng kiểm tra kết nối!");
+  }
+}
+
   });
 
   useEffect(() => {
