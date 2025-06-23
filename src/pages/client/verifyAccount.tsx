@@ -1,62 +1,62 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Footer from "../../layouts/clientFooter";
 import HeaderClient from "../../layouts/clientHeader";
 import MenuClient from "../../layouts/clientMenu";
 import axios from "axios";
+import axiosInstance from "../../services/axiosInstance";
 
-const RESEND_TIME = 60; // giây
+const RESEND_TIME = 60; // thời gian đếm ngược khi gửi lại mã
 
 const VerifyAccount = () => {
-  // Lấy email từ localStorage (hoặc context, props)
-  const email = localStorage.getItem("userEmail") || "";
-  const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
+ const location = useLocation();
+  const email = location.state?.email || "";
 
-  // Đếm ngược khi gửi lại mã
+  const [code, setCode] = useState("");
+  const [countdown, setCountdown] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState(true);
+
+  // ⏱ Đếm ngược gửi lại mã
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [countdown]);
+  if (countdown <= 0) return;
 
-  // Gửi mã xác thực về email
+  const timer = setInterval(() => {
+    setCountdown((prev) => prev - 1);
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, [countdown]);
+
+  // 📩 Gửi lại mã xác thực
   const handleSendCode = async () => {
+    if (!email) return setError("Không có địa chỉ email để gửi mã.");
+
     setIsSending(true);
     setError("");
-    setMessage("");
     try {
-      await axios.post("/api/auth/send-verify-email", { email });
-    } catch (err: any) {
-      // Không hiển thị lỗi thiếu email
-    } finally {
-      setMessage("Mã xác thực đã được gửi tới email của bạn.");
+      await axios.post(`${import.meta.env.VITE_API_URL}/auth/resend-code`, { email });
+      setMessage(true);
       setCountdown(RESEND_TIME);
+    } catch (err :any) {
+      setError(err.response?.data?.message || "Gửi lại mã thất bại.");
+    } finally {
       setIsSending(false);
     }
   };
 
-  // Xác thực mã
-  const handleSubmit = async (e: React.FormEvent) => {
+  // ✅ Xác thực mã
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError("");
-    setMessage("");
-    if (!code) {
-      setError("Vui lòng nhập mã xác thực!");
-      return;
-    }
     try {
-      await axios.post("/api/auth/verify-email", { email, code });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/verify`, { email, code });
       alert("Xác thực thành công!");
       navigate("/login");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Xác thực thất bại!");
+      setError(err.response?.data?.message || "Mã xác thực không đúng.");
     }
   };
 
@@ -67,31 +67,20 @@ const VerifyAccount = () => {
         <MenuClient />
         <article>
           <div className="flex flex-col items-center justify-center min-h-[60vh] bg-white">
-            <h2 className="text-2xl font-semibold mt-20">Xác thực tài khoản?</h2>
+            <h2 className="text-2xl font-semibold mt-20">Xác thực tài khoản</h2>
             {message ? (
-              <p className="mb-6 text-gray-600">(Mã xác thực đã được gửi tới email của bạn, nếu không tìm thấy hãy thử kiểm tra trong thư rác hoặc bấm <a href="/#">gửi lại</a>)</p>
-            ) : (
-              <>
-                <p className="mb-2 text-gray-600">(Nhấn vào dòng dưới để nhận mã xác thực qua email)</p>
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={isSending || countdown > 0}
-                  className={`mb-4 underline text-blue-600 font-medium bg-transparent border-none outline-none cursor-pointer ${
-                    isSending || countdown > 0
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:text-blue-800"
-                  }`}
-                >
-                  {countdown > 0
-                    ? `Gửi lại mã sau ${countdown}s`
-                    : isSending
-                    ? "Đang gửi..."
-                    : "Nhận mã xác thực qua email"}
+              <p className="mb-6 text-gray-600">
+                Mã xác thực đã được gửi tới email của bạn. Nếu không thấy, hãy kiểm tra thư rác hoặc{" "}
+                <button onClick={handleSendCode} disabled={isSending || countdown > 0} className="underline text-blue-600">
+                  {countdown > 0 ? `Gửi lại sau ${countdown}s` : "gửi lại"}
                 </button>
-              </>
+              </p>
+            ) : (
+              <p className="mb-2 text-gray-600">(Nhấn vào nút dưới để nhận mã xác thực qua email)</p>
             )}
+
             {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
+
             <form onSubmit={handleSubmit} className="w-full max-w-sm">
               <input
                 type="text"
