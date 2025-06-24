@@ -51,31 +51,34 @@ const Login = () => {
       }, 2000);
     },
     onError: (err) => {
-  if (axios.isAxiosError(err) && err.response) {
-    const status = err.response.status;
-    const errorData = err.response.data as { errors?: string[]; message?: string; email?: string };
-    const errorMessage = errorData?.message || "Đăng nhập thất bại!";
+      if (axios.isAxiosError(err) && err.response) {
+        const status = err.response.status;
+        const errorData = err.response.data as {
+          errors?: string[];
+          message?: string;
+          email?: string;
+        };
+        const errorMessage = errorData?.message || "Đăng nhập thất bại!";
 
-    if (status === 402) {
-      // Nếu BE trả về email trong response
-      const email = errorData.email || ""; 
-      console.log("Email from server:", email);
-      navigate("/verify-account", { state: { email } }); // hoặc query string nếu thích
-      toast.info("Tài khoản chưa xác thực. Vui lòng kiểm tra email.");
-      return;
-    }
-    console.log("Login error:", err.response);
-    toast.error(errorMessage);
+        if (status === 402) {
+          const email = errorData.email || formData.email; // fallback nếu BE không trả email
+          localStorage.setItem("verify_email", email); // Lưu tạm
+          localStorage.setItem("temp_auth", JSON.stringify(formData));
+          navigate("/verify-account", { state: { email } });
+          toast.info("Tài khoản chưa xác thực. Vui lòng kiểm tra email.");
+          return;
+        }
+        console.log("Login error:", err.response);
+        toast.error(errorMessage);
 
-    setErrors({
-      email: errorMessage.includes("email") ? errorMessage : "",
-      password: errorMessage.includes("mật khẩu") ? errorMessage : "",
-    });
-  } else {
-    toast.error("Có lỗi xảy ra. Vui lòng kiểm tra kết nối!");
-  }
-}
-
+        setErrors({
+          email: errorMessage.includes("email") ? errorMessage : "",
+          password: errorMessage.includes("mật khẩu") ? errorMessage : "",
+        });
+      } else {
+        toast.error("Có lỗi xảy ra. Vui lòng kiểm tra kết nối!");
+      }
+    },
   });
 
   useEffect(() => {
@@ -115,7 +118,7 @@ const Login = () => {
             <form onSubmit={handleSubmit} id="loginForm">
               <div className="flex flex-col items-center">
                 <p className="font-semibold text-xl py-4">
-                  Bạn đã có tài khoản IVY
+                  Bạn đã có tài khoản Elavia
                 </p>
 
                 <p className="text-[14px] text-gray-500 mb-5 text-center">
