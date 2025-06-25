@@ -11,6 +11,9 @@ import { CartItem } from "../../types/cart";
 import ClientLayout from "../../layouts/clientLayout";
 import ProductItemForm from "../../components/productItem";
 import { usePostItem } from "../../hooks/usePostItem";
+import { useAddToCart } from "../../hooks/useAddToCart";
+import ProductItemVariantForm from "../../components/productItemVariant";
+import { HiCheck } from "react-icons/hi";
 
 const DetailProduct = ({ productId }: { productId: string }) => {
   const queryClient = useQueryClient();
@@ -114,19 +117,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
       });
     }
   };
-  const addToCartMutation = useMutation({
-    mutationFn: addToCart,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["cartQuantity"] });
-      toast.success("Thêm vào giỏ hàng thành công");
-    },
-    onError: (error: Error) => {
-      console.error("Lỗi từ server:", error.message);
-      toast.error("Lỗi khi thêm sản phẩm");
-    },
-  });
-
+  const addToCartMutation = useAddToCart();
   const handleQuantityChange = (change: number) => {
     const selectedSizeStock =
       product?.sizes.find(
@@ -150,7 +141,16 @@ const DetailProduct = ({ productId }: { productId: string }) => {
         namespace: `categories/parent/${product.productId.categoryId}`,
       }),
   });
+  function isDarkColor(hex: string): boolean {
+    const cleanHex = hex.replace("#", "");
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
 
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+    return brightness < 128;
+  }
   if (isLoading) return <Loading />;
   if (error)
     return <div>Error loading product: {(error as Error).message}</div>;
@@ -237,17 +237,30 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                 Màu sắc: {product.color.colorName}
               </div>
               <div className="flex gap-2">
-                {colors?.map((color: any) => (
-                  <Link
-                    key={color._id}
-                    to={`/products/${color._id}`}
-                    className="rounded-full w-5 h-5 border border-gray-300"
-                    style={{
-                      backgroundColor: color.actualColor,
-                    }}
-                    title={color.actualColor}
-                  ></Link>
-                ))}
+                {colors.map(
+                  (color: any) => {
+                    const isMainColor =
+                      color.actualColor === product.color?.actualColor;
+                    const iconColor = isDarkColor(color.actualColor)
+                      ? "text-white"
+                      : "text-black";
+                    return (
+                      <Link
+                        key={color._id}
+                        to={`/products/${color._id}`}
+                        className={`relative inline-block rounded-full w-5 h-5 border border-gray-300`}
+                        style={{ backgroundColor: color.actualColor }}
+                        title={color.actualColor}
+                      >
+                        {isMainColor && (
+                          <div className="absolute p-[3px]">
+                            <HiCheck className={`w-3 h-3 ${iconColor}`} />
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  }
+                )}
               </div>
               <div className="flex gap-4 my-4">
                 {product.sizes.map(
@@ -313,17 +326,17 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                   }`}
                   onClick={() => {
                     if (!isOutOfStock && selectedSize) {
-                      if (!auth.user.id) {
+                      if (!auth.user?.id) {
                         toast.error("Bạn cần đăng nhập!");
                         return;
                       }
-                      const cartItem: CartItem = {
+
+                      addToCartMutation.mutate({
                         userId: auth.user.id,
                         productVariantId: product._id,
                         size: selectedSize,
                         quantity: quantity,
-                      };
-                      addToCartMutation.mutate(cartItem);
+                      });
                     } else if (!selectedSize) {
                       toast.error("Vui lòng chọn size!");
                     }
@@ -473,7 +486,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
           </p>
           {/* Product Items for Collection */}
           <div className="w-full">
-            <ProductItemForm namespace="recently-viewed" />
+            <ProductItemVariantForm namespace="recently-viewed" />
           </div>
           <div>
             <img
