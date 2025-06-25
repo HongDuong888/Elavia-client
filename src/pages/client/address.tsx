@@ -8,6 +8,7 @@ import { z } from "zod";
 import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import EditAddressModal from "./editAddressModal";
 
 const AddressSchema = z.object({
   receiver_name: z.string().min(2, "Tên người nhận tối thiểu 2 ký tự"),
@@ -56,6 +57,8 @@ const Address = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [error, setError] = useState("");
+const [showEditModal, setShowEditModal] = useState(false);
+const [editAddress, setEditAddress] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -76,18 +79,29 @@ const Address = () => {
       postItem({ namespace: "auth/add-shipping-address", values: payload }),
     onSuccess: () => {
       toast.success("Thêm địa chỉ thành công!");
-      setTimeout(() => {
-        window.location.reload(); // Reload lại trang
-      }, 1000);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+
+      // Reset form
+      setFormData({
+        receiver_name: "",
+        phone: "",
+        city: "",
+        district: "",
+        commune: "",
+        address: "",
+      });
+      setSelectedCity("");
+      setSelectedDistrict("");
+      setSelectedWard("");
     },
     onError: (error: AxiosError<ErrorResponse>) => {
-      const errorData = error.response?.data;
-      if (errorData?.errors) {
-        toast.error("Lỗi validation: " + errorData.errors.join(", "));
-      } else {
-        toast.error("Có lỗi xảy ra khi thêm địa chỉ!");
-      }
-    },
+    const errorData = error.response?.data;
+    if (errorData?.errors) {
+      toast.error("Lỗi validation: " + errorData.errors.join(", "));
+    } else {
+      toast.error("Có lỗi xảy ra khi thêm địa chỉ!");
+    }
+  },
   });
 
   const handleChange = (
@@ -167,7 +181,7 @@ const Address = () => {
           name: communeObj?.Name || "",
         },
         address: validatedData.address,
-        isDefault: true,
+        isDefault: false,
       };
 
       // Gửi payload qua mutation
@@ -183,6 +197,57 @@ const Address = () => {
     e.preventDefault();
     console.log("Form data:", formData);
   };
+
+  const handleSetDefault = async (id: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Bạn chưa đăng nhập!");
+      return;
+    }
+
+    await axios.put(
+      `${import.meta.env.VITE_API_URL}/auth/address/default/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+    toast.success("Cập nhật địa chỉ mặc định thành công!");
+  } catch (err) {
+    toast.error("Không thể cập nhật địa chỉ mặc định");
+  }
+};
+
+const handleDeleteAddress = async (id: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Bạn chưa đăng nhập!");
+      return;
+    }
+
+    await axios.delete(`${import.meta.env.VITE_API_URL}/auth/address/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["users"] });
+    toast.success("Xoá địa chỉ thành công!");
+  } catch (err) {
+    toast.error("Không thể xoá địa chỉ");
+  }
+};
+
+const sortedAddresses = data?.shipping_addresses?.sort((a: any, b: any) =>
+  a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1
+);
+
   return (
     <>
       <ClientLayout>
@@ -213,31 +278,49 @@ const Address = () => {
               </div>
               <div className="grid grid-cols-2 gap-4 ">
                 <div>
-                  {data?.shipping_addresses?.map((address: any, index: any) => (
-                    <div
-                      key={index}
-                      className="border-2 w-[470px] h-[200px] rounded-tl-2xl rounded-br-2xl mb-8"
-                    >
+                  {sortedAddresses?.map((address: any) => (
+                    <div key={address._id} className="...">
                       <div className="flex justify-between">
-                        <div className="p-6 font-semibold ">
-                          {address?.receiver_name}
-                        </div>
+                        <div className="p-6 font-semibold">{address.receiver_name}</div>
                         <div className="flex gap-2 p-4">
-                          <div className="p-2">Sửa</div>
-                          <button className="rounded-tl-xl rounded-br-xl border-2 p-2 bg-black text-white hover:bg-white hover:text-black hover:border-black">
-                            Mặc định
+                          {/* Nút chọn mặc định hoặc hiển thị đã mặc định */}
+                          {address.isDefault ? (
+                            <span className="bg-black text-white px-3 py-2 text-sm rounded">Mặc định</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSetDefault(address._id)}
+                              className="text-sm border border-black px-3 py-1 rounded hover:bg-black hover:text-white transition"
+                            >
+                              Chọn làm mặc định
+                            </button>
+                          )}
+                           <button
+                            type="button"
+                            onClick={() => handleDeleteAddress(address._id)}
+                            className="px-3 py-1 text-sm border border-red-500 text-red-500 rounded hover:bg-red-500 hover:text-white transition"
+                          >
+                            Xóa
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditAddress(address); // set địa chỉ được chọn
+                              setShowEditModal(true);  // mở modal
+                            }}
+                            className="px-3 py-1 text-sm border border-red-500 text-red-500 rounded hover:bg-red-500 hover:text-white transition"
+                          >
+                            Sửa
                           </button>
                         </div>
                       </div>
-                      <div className="px-6 mb-4">
-                        Điện thoại: {address?.phone}
-                      </div>
-                      <div className="px-6 mb-4 ">
-                        Địa chỉ: {address?.address},{address?.commune?.name},
-                        {address?.district?.name},{address?.city?.name}
-                      </div>
+                      <div className="px-6 mb-2">Điện thoại: {address.phone}</div>
+                        <div className="px-6 mb-2">
+                          Địa chỉ: {address.address}, {address.commune?.name}, {address.district?.name}, {address.city?.name}
+                        </div>
                     </div>
                   ))}
+
                 </div>
                 <div>
                   <form onSubmit={handleSubmit}>
@@ -361,6 +444,13 @@ const Address = () => {
               </div>
             </div>
           </div>
+          {showEditModal && editAddress && (
+            <EditAddressModal
+              address={editAddress}
+              onClose={() => setShowEditModal(false)}
+              onSuccess={() => queryClient.invalidateQueries({ queryKey: ["users"] })}
+            />
+          )}
         </article>
       </ClientLayout>
     </>
