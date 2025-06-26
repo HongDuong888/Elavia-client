@@ -179,12 +179,11 @@ const Dathang = () => {
 
         try {
           await axiosInstance.post(
-            "http://localhost:5175/api/admin/orders",
+
+            `${import.meta.env.VITE_API_URL}/orders`,
             payload
           );
-          await axiosInstance.get(
-            "http://localhost:5175/api/cart/clear"
-          );
+          await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
           toast.success("Đặt hàng thành công!");
           navigate("/ordersuccess", {
             state: {
@@ -241,7 +240,7 @@ const Dathang = () => {
           console.log("MoMo Payment Request:", momoPayload);
 
           const momoResponse = await axiosInstance.post(
-            "http://localhost:5175/api/orders/momo/create",
+            `${import.meta.env.VITE_API_URL}/orders/momo/create`,
             momoPayload
           );
 
@@ -255,12 +254,10 @@ const Dathang = () => {
           }
           payload.paymentUrl = momoResponse.data.payUrl;
           await axiosInstance.post(
-            "http://localhost:5175/api/orders",
+            `${import.meta.env.VITE_API_URL}/orders`,
             payload
           );
-          await axiosInstance.get(
-            "http://localhost:5175/api/cart/clear"
-          );
+          await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
           window.open(momoResponse.data.payUrl, "_blank");
         } catch (error: any) {
           console.error("Lỗi thanh toán MoMo:", error);
@@ -305,7 +302,7 @@ const Dathang = () => {
 
         try {
           const zaloResponse = await axiosInstance.post(
-            "http://localhost:5175/api/orders/zalopay/create",
+            `${import.meta.env.VITE_API_URL}/orders/zalopay/create`,
             zaloPayload
           );
 
@@ -322,12 +319,10 @@ const Dathang = () => {
           payload.paymentUrl = zaloResponse.data.order_url;
 
           await axiosInstance.post(
-            "http://localhost:5175/api/orders",
+            `${import.meta.env.VITE_API_URL}/orders`,
             payload
           );
-          await axiosInstance.get(
-            "http://localhost:5175/api/cart/clear"
-          );
+          await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
           window.open(zaloResponse.data.order_url, "_blank");
         } catch (error) {
           console.error("Lỗi ZaloPay:", error);
