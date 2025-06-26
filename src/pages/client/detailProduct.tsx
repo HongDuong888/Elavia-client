@@ -42,7 +42,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
     staleTime: 60 * 1000,
   });
   const wishlistIds: string[] =
-    wishlistData?.wishlist?.products?.map((item: any) => item._id) || [];
+    wishlistData?.data?.map((item: any) => item._id) || [];
 
   const postItemGetColorsMutation = usePostItem({
     showToast: false,

@@ -79,6 +79,7 @@ const ProductItemForm: React.FC<ProductItemFormProps> = ({ namespace }) => {
         namespace: `wishlist/${id}`,
         values: new FormData(),
       });
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     }
   };
 
@@ -88,6 +89,7 @@ const ProductItemForm: React.FC<ProductItemFormProps> = ({ namespace }) => {
         namespace: `wishlist/remove/${id}`,
         values: new FormData(),
       });
+      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
     }
   };
   function isDarkColor(hex: string): boolean {
