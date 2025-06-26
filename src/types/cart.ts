@@ -37,6 +37,10 @@ export interface ICartItem {
       createdAt: string;
       updatedAt: string;
     };
+    sizes?: Array<{
+      size: string;
+      stock: number;
+    }>;
   };
   quantity: number;
   size: string;
