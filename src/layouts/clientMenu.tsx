@@ -279,7 +279,7 @@ const MenuClient = () => {
                       Sản phẩm đã xem
                     </Link>
                     <Link
-                      to="/favorite_products"
+                      to="/wish-products"
                       className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
                     >
                       Sản phẩm yêu thích

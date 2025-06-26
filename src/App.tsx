@@ -11,13 +11,14 @@ import CheckLogin from "./components/checkLogin"; //Nếu chưa đăng nhập th
 import Orders from "./pages/client/orders";
 import Address from "./pages/client/address";
 import Detail_order from "./pages/client/detailOrder";
-import FavoriteProducts from "./pages/client/favorite_products";
+import WishProducts from "./pages/client/wishProducts";
 import DetailUser from "./pages/client/detailUser";
-import TermsPolicy from "./pages/client/terms-policy";
-import BuyingGuide from "./pages/client/buying-guide";
-import PaymentPolicy from "./pages/client/payment-policy";
-import ReturnPolicy from "./pages/client/return-policy";
+import TermsPolicy from "./pages/client/termsPolicy";
+import BuyingGuide from "./pages/client/buyingGuide";
+import PaymentPolicy from "./pages/client/paymentPolicy";
+import ReturnPolicy from "./pages/client/returnPolicy";
 import VerifyAccount from "./pages/client/verifyAccount";
+import ViewedProducts from "./pages/client/viewedProduct";
 
 function App() {
   const DetailProductWrapper = () => {
@@ -47,8 +48,12 @@ function App() {
     { path: "/dathang", element: <CheckLogin element={<Dathang />} /> },
     { path: "/address", element: <CheckLogin element={<Address />} /> },
     {
-      path: "/favorite_products",
-      element: <CheckLogin element={<FavoriteProducts />} />,
+      path: "/wish-products",
+      element: <CheckLogin element={<WishProducts />} />,
+    },
+    {
+      path: "/viewed-products",
+      element: <CheckLogin element={<ViewedProducts />} />,
     },
   ]);
   return routes;

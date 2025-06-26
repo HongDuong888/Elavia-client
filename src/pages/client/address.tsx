@@ -8,7 +8,7 @@ import { z } from "zod";
 import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import EditAddressModal from "./editAddressModal";
+import EditAddressModal from "./editAddress";
 
 const AddressSchema = z.object({
   receiver_name: z.string().min(2, "Tên người nhận tối thiểu 2 ký tự"),

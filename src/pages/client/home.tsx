@@ -58,7 +58,7 @@ const Home = () => {
 
           {/* Product Items */}
           <div className="w-full">
-            <ProductItemForm namespace="" />
+            <ProductItemForm namespace="products" />
           </div>
 
           {/* View All Button */}
@@ -77,17 +77,14 @@ const Home = () => {
             </p>
           </div>
 
-          {/* Product Items for Collection */}
           <div className="w-full">
-            <ProductItemForm namespace="" />
+            <ProductItemForm namespace="products" />
           </div>
 
-          {/* View All Button */}
           <div className="p-2 sm:p-3 border border-black text-center w-28 sm:w-32 h-10 sm:h-12 mx-auto rounded-tl-[25px] rounded-br-[25px] mb-8 sm:mb-12 hover:bg-black hover:text-white transition-all duration-300 cursor-pointer flex items-center justify-center">
             <span className="text-sm sm:text-base">Xem tất cả</span>
           </div>
 
-          {/* Large Banner Image */}
           <div className="w-full mb-4">
             <img
               className="w-full rounded-tl-[40px] sm:rounded-tl-[60px] md:rounded-tl-[80px] rounded-br-[40px] sm:rounded-br-[60px] md:rounded-br-[80px]"
@@ -96,7 +93,6 @@ const Home = () => {
             />
           </div>
 
-          {/* Secondary Slideshow */}
           <div className="w-full overflow-hidden py-4">
             <Slideshow2 />
           </div>

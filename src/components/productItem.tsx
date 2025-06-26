@@ -45,7 +45,7 @@ const ProductItemForm: React.FC<ProductItemFormProps> = ({ namespace }) => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["products", namespace],
-    queryFn: async () => getList({ namespace: `products/${namespace}` }), // Đổi namespace gọi API Product
+    queryFn: async () => getList({ namespace: `${namespace}` }), // Đổi namespace gọi API Product
     staleTime: 60 * 1000,
   });
 
@@ -57,7 +57,7 @@ const ProductItemForm: React.FC<ProductItemFormProps> = ({ namespace }) => {
 
   const products: ProductWithVariant[] = data?.data || [];
   const wishlistIds: string[] =
-    wishlistData?.wishlist?.products?.map((item: any) => item._id) || [];
+    wishlistData?.data?.map((item: any) => item._id) || [];
 
   const addWishListMutation = usePostItem({
     showToast: false,
@@ -123,7 +123,7 @@ const ProductItemForm: React.FC<ProductItemFormProps> = ({ namespace }) => {
         spaceBetween={30}
         slidesPerView={5}
         loop={true}
-        autoplay={{ delay: 3000, disableOnInteraction: false }}
+        autoplay={{ delay: 3000, disableOnInteraction: true }}
         speed={500}
         modules={[Autoplay]}
         breakpoints={{

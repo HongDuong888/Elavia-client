@@ -237,30 +237,28 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                 Màu sắc: {product.color.colorName}
               </div>
               <div className="flex gap-2">
-                {colors.map(
-                  (color: any) => {
-                    const isMainColor =
-                      color.actualColor === product.color?.actualColor;
-                    const iconColor = isDarkColor(color.actualColor)
-                      ? "text-white"
-                      : "text-black";
-                    return (
-                      <Link
-                        key={color._id}
-                        to={`/products/${color._id}`}
-                        className={`relative inline-block rounded-full w-5 h-5 border border-gray-300`}
-                        style={{ backgroundColor: color.actualColor }}
-                        title={color.actualColor}
-                      >
-                        {isMainColor && (
-                          <div className="absolute p-[3px]">
-                            <HiCheck className={`w-3 h-3 ${iconColor}`} />
-                          </div>
-                        )}
-                      </Link>
-                    );
-                  }
-                )}
+                {colors.map((color: any) => {
+                  const isMainColor =
+                    color.actualColor === product.color?.actualColor;
+                  const iconColor = isDarkColor(color.actualColor)
+                    ? "text-white"
+                    : "text-black";
+                  return (
+                    <Link
+                      key={color._id}
+                      to={`/products/${color._id}`}
+                      className={`relative inline-block rounded-full w-5 h-5 border border-gray-300`}
+                      style={{ backgroundColor: color.actualColor }}
+                      title={color.actualColor}
+                    >
+                      {isMainColor && (
+                        <div className="absolute p-[3px]">
+                          <HiCheck className={`w-3 h-3 ${iconColor}`} />
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })}
               </div>
               <div className="flex gap-4 my-4">
                 {product.sizes.map(
@@ -486,7 +484,10 @@ const DetailProduct = ({ productId }: { productId: string }) => {
           </p>
           {/* Product Items for Collection */}
           <div className="w-full">
-            <ProductItemVariantForm namespace="recently-viewed" />
+            <ProductItemVariantForm
+              namespace="product-variants/recently-viewed"
+              isSlideshow
+            />
           </div>
           <div>
             <img
