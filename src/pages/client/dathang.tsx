@@ -15,7 +15,7 @@ const Dathang = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { auth } = useAuth();
-  const [showProducts, setShowProducts] = useState(true);
+  const [showProducts, setShowProducts] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [voucher, setVoucher] = useState("");
   const [supportCode, setSupportCode] = useState("");
@@ -484,16 +484,19 @@ const Dathang = () => {
                   <table className="w-full bg-white table-auto border-collapse">
                     <thead className="border-b bg-gray-100">
                       <tr>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                        <th className="pr-4 py-2 text-left text-sm font-semibold text-gray-700">
                           Sản phẩm
                         </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                        <th className="pr-4 py-2 text-left text-sm font-semibold text-gray-700">
                           Số lượng
                         </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                        <th className="pr-4 py-2 text-left text-sm font-semibold text-gray-700">
                           Size
                         </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">
+                        <th className="pr-4 py-2 text-left text-sm font-semibold text-gray-700">
+                          Giá
+                        </th>
+                        <th className="pr-4 py-2 text-left text-sm font-semibold text-gray-700">
                           Tổng tiền
                         </th>
                       </tr>
@@ -507,7 +510,7 @@ const Dathang = () => {
                               index % 2 === 1 ? "bg-gray-100" : ""
                             }`}
                           >
-                            <td className="px-4 py-2 text-sm text-gray-700">
+                            <td className="pr-4 py-2 text-sm text-gray-700">
                               <div className="flex items-center gap-4">
                                 <Link
                                   to={`/products/${encodeURIComponent(
@@ -524,7 +527,7 @@ const Dathang = () => {
                                       item?.productVariantId?.productId?.name ||
                                       "Product"
                                     }
-                                    className="w-28 h-[140px] object-cover rounded transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
+                                    className="w-18 h-[100px] object-cover rounded transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
                                     onError={(e) =>
                                       (e.currentTarget.src = "/fallback.jpg")
                                     }
@@ -538,7 +541,7 @@ const Dathang = () => {
                                       item?.productVariantId?.productId?.name ||
                                       "Product"
                                     }
-                                    className="w-28 h-[140px] object-cover rounded absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
+                                    className="w-18 h-[100px] object-cover rounded absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
                                     onError={(e) =>
                                       (e.currentTarget.src = "/fallback.jpg")
                                     }
@@ -555,22 +558,24 @@ const Dathang = () => {
                                 </Link>
                               </div>
                             </td>
-                            <td className="px-4 py-2 text-sm text-gray-700">
-                              <div className="flex items-center gap-4">
-                                <div className="relative flex items-center justify-center w-[5.5rem] h-8 my-4">
-                                  <div
-                                    id={`quantityDisplay-${item._id}`}
-                                    className="flex items-center justify-center text-center text-sm border border-gray-300 w-12 h-full z-10 rounded-tl-[20px] rounded-br-[20px]"
-                                  >
-                                    {item.quantity}
-                                  </div>
-                                </div>
+                            <td className="pr-4 py-2 text-sm text-gray-700">
+                              <div
+                                id={`quantityDisplay-${item._id}`}
+                                className="flex items-center justify-center text-center text-sm border border-gray-300 w-12 h-8 z-10 rounded-tl-[20px] rounded-br-[20px]"
+                              >
+                                {item.quantity}
                               </div>
                             </td>
-                            <td className="px-4 py-2 text-sm text-gray-700">
+                            <td className="pr-4 py-2 text-sm text-gray-700">
                               {item.size}
                             </td>
-                            <td className="px-4 py-2 text-sm text-gray-700">
+                            <td className="pr-4 py-2 text-sm text-gray-700">
+                              {item?.productVariantId?.price.toLocaleString(
+                                "vi-VN"
+                              )}{" "}
+                              đ
+                            </td>
+                            <td className="pr-4 py-2 text-sm text-gray-700">
                               {(
                                 (item?.productVariantId?.price || 0) *
                                 (item?.quantity || 0)
