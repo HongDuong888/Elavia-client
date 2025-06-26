@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ICartItem } from "../../types/cart";
 import { useAuth } from "../../context/auth.context";
@@ -12,10 +12,14 @@ import { useGHNMapper } from "../../utils/ghnMapping";
 import ClientLayout from "../../layouts/clientLayout";
 
 const Dathang = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { auth } = useAuth();
   const [showProducts, setShowProducts] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [voucher, setVoucher] = useState("");
+  const [supportCode, setSupportCode] = useState("");
+  const [voucherTab, setVoucherTab] = useState<"ma-giam-gia" | "ma-cua-toi">("ma-giam-gia");
 
   // const cityName = userData[0].city.name;
   // const districtName = userData[0].district.name;
@@ -175,11 +179,18 @@ const Dathang = () => {
 
         try {
           await axiosInstance.post(
+
             `${import.meta.env.VITE_API_URL}/orders`,
             payload
           );
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
           toast.success("Đặt hàng thành công!");
+          navigate("/ordersuccess", {
+            state: {
+              orderId: payload.orderId,
+              receiverName: userData[0].receiver_name,
+            },
+          });
         } catch (error: any) {
           throw new Error(
             error.response?.data?.message || "Thanh toán thất bại"
@@ -371,9 +382,12 @@ const Dathang = () => {
                         {userData[0].receiver_name}
                       </div>
                       <div className="flex gap-4">
-                        <div className="text-[14px] underline">
+                        <Link
+                          to="/address"
+                          className="text-[14px] underline hover:text-black transition"
+                        >
                           Chọn địa chỉ khác
-                        </div>
+                        </Link>
                         <div>
                           <a
                             className="py-[10px] px-[16px] border border-black text-white bg-black rounded-tl-[20px] rounded-br-[20px] mt-8 hover:text-black hover:bg-white"
@@ -588,45 +602,82 @@ const Dathang = () => {
                 <br />
                 <div className="text-[14px] text-[#57585A]">
                   <div className="flex justify-between">
-                    <div>Tổng sản phẩm</div>
-                    <div>{totalQuantity}</div>
-                  </div>
-                </div>
-                <br />
-                <div className="text-[14px] text-[#57585A]">
-                  <div className="flex justify-between">
                     <div>Tổng tiền hàng</div>
-                    <div>{totalPrice.toLocaleString("vi-VN")} đ</div>
+                    <div>{totalPrice.toLocaleString("vi-VN")}đ</div>
                   </div>
-                </div>
-                <br />
-                <div className="text-[14px] text-[#57585A]">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between mt-2">
+                    <div>Tạm tính</div>
+                    <div>{totalPrice.toLocaleString("vi-VN")}đ</div>
+                  </div>
+                  <div className="flex justify-between mt-2">
                     <div>Phí vận chuyển</div>
-                    <div>Miễn phí</div>
+                    <div>0đ</div>
                   </div>
-                </div>
-                <br />
-                <div className="text-[14px] text-[#57585A]">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between mt-2 font-semibold">
                     <div>Tiền thanh toán</div>
-                    <div className="font-semibold">
-                      {totalPrice.toLocaleString("vi-VN")} đ
-                    </div>
+                    <div>{totalPrice.toLocaleString("vi-VN")}đ</div>
                   </div>
                 </div>
-                <hr />
+                <hr className="my-4" />
+
+                {/* VOUCHER */}
+                <div>
+                  <div className="flex border-b mb-2">
+                    <button
+                      className={`px-4 py-2 text-sm font-semibold ${voucherTab === "ma-giam-gia" ? "border-b-2 border-black" : "text-gray-500"}`}
+                      onClick={() => setVoucherTab("ma-giam-gia")}
+                    >
+                      Mã phiếu giảm giá
+                    </button>
+                    <button
+                      className={`px-4 py-2 text-sm font-semibold ${voucherTab === "ma-cua-toi" ? "border-b-2 border-black" : "text-gray-500"}`}
+                      onClick={() => setVoucherTab("ma-cua-toi")}
+                    >
+                      Mã của tôi
+                    </button>
+                  </div>
+                  {voucherTab === "ma-giam-gia" && (
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        placeholder="Mã giảm giá"
+                        value={voucher}
+                        onChange={e => setVoucher(e.target.value)}
+                        className="flex-1 border px-3 py-2 rounded"
+                      />
+                      <button
+                        className="border px-4 py-2 rounded bg-white font-semibold"
+                        // onClick={handleApplyVoucher}
+                        type="button"
+                      >
+                        ÁP DỤNG
+                      </button>
+                    </div>
+                  )}
+                  {voucherTab === "ma-cua-toi" && (
+                    <div className="mb-2 text-gray-500 text-sm">
+                      Bạn chưa có mã nào.
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    placeholder="Mã nhân viên hỗ trợ"
+                    value={supportCode}
+                    onChange={e => setSupportCode(e.target.value)}
+                    className="w-full border px-3 py-2 rounded mb-2"
+                  />
+                </div>
               </div>
               <div>
                 <button
                   onClick={handlePayment}
-                  className={`bg-black w-full h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center lg:text-[16px] md:text-[12px] text-white font-semibold ${
-                    validItems.length === 0
+                  className={`bg-black w-full h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center lg:text-[16px] md:text-[12px] text-white font-semibold mt-4
+                    ${validItems.length === 0
                       ? "opacity-50 cursor-not-allowed"
                       : "hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer"
-                  } transition-all duration-300`}
+                    } transition-all duration-300`}
                 >
-                  {validItems.length === 0 ? "GIỎ HÀNG TRỐNG" : "THANH TOÁN"}
+                  {validItems.length === 0 ? "GIỎ HÀNG TRỐNG" : "HOÀN THÀNH"}
                 </button>
               </div>
             </div>

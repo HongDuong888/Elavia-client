@@ -19,6 +19,7 @@ import PaymentPolicy from "./pages/client/paymentPolicy";
 import ReturnPolicy from "./pages/client/returnPolicy";
 import VerifyAccount from "./pages/client/verifyAccount";
 import ViewedProducts from "./pages/client/viewedProduct";
+import Ordersuccess from "./pages/client/orderSuccess";
 
 function App() {
   const DetailProductWrapper = () => {
@@ -55,6 +56,7 @@ function App() {
       path: "/viewed-products",
       element: <CheckLogin element={<ViewedProducts />} />,
     },
+    { path: "/ordersuccess", element: <Ordersuccess /> },
   ]);
   return routes;
 }

@@ -60,8 +60,12 @@ const Detail_order = () => {
                     <div className="flex-1">
                       <div className="flex gap-4">
                         <img
-                          src={item.productVariantId.images.main.url}
-                          alt="ddd"
+                          src={
+                            item.productVariantId?.images?.main?.url
+                              ? item.productVariantId.images.main.url
+                              : "https://via.placeholder.com/150x215?text=No+Image"
+                          }
+                          alt={item.productName}
                           className="w-[150px] h-[215px] object-cover"
                         />
                         <div className="flex flex-col justify-between">
@@ -75,7 +79,7 @@ const Detail_order = () => {
                               </div>
                             </div>
                             <p className="text-sm text-gray-600 py-0.5">
-                              Màu sắc: {item.productVariantId.color.colorName}
+                              Màu sắc: {item.productVariantId?.color?.colorName || item.color || "Không có"}
                             </p>
                             <p className="text-sm text-gray-600 py-0.5">
                               Size: {item.size}
@@ -84,7 +88,7 @@ const Detail_order = () => {
                               Số lượng: {item.quantity}
                             </p>
                             <p className="text-sm text-gray-600 py-0.5">
-                              SKU: {item.productVariantId.sku}
+                              SKU: {item.productVariantId?.sku || item.sku || "Không có"}
                             </p>
                           </div>
                           <button className="w-fit mt-2 px-4 py-1 border border-black rounded-md hover:bg-black hover:text-white transition">
