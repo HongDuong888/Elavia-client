@@ -353,6 +353,9 @@ const Cart = () => {
                       Size
                     </th>
                     <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Giá
+                    </th>
+                    <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Tổng tiền
                     </th>
                     <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"></th>
@@ -372,7 +375,7 @@ const Cart = () => {
                             index % 2 === 1 ? "bg-gray-100" : ""
                           }`}
                         >
-                          <td className="px-4 py-2 text-sm text-gray-700">
+                          <td className="pr-4 py-2 text-sm text-gray-700">
                             <div className="flex items-center gap-4">
                               <Link
                                 to={`/products/${encodeURIComponent(
@@ -389,7 +392,7 @@ const Cart = () => {
                                     item?.productVariantId?.productId?.name ||
                                     "Product"
                                   }
-                                  className="w-28 h-[140px] object-cover rounded transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
+                                  className="w-18 h-[100px] object-cover rounded transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
                                   onError={(e) =>
                                     (e.currentTarget.src = "/fallback.jpg")
                                   }
@@ -403,7 +406,7 @@ const Cart = () => {
                                     item?.productVariantId?.productId?.name ||
                                     "Product"
                                   }
-                                  className="w-28 h-[140px] object-cover rounded absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
+                                  className="w-18 h-[100px] object-cover rounded absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
                                   onError={(e) =>
                                     (e.currentTarget.src = "/fallback.jpg")
                                   }
@@ -420,7 +423,7 @@ const Cart = () => {
                               </Link>
                             </div>
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-700">
+                          <td className="pr-4 py-2 text-sm text-gray-700">
                             <div className="relative flex items-center justify-center w-[5.5rem] h-8 my-4">
                               <button
                                 id={`decreaseBtn-${item._id}`}
@@ -470,10 +473,17 @@ const Cart = () => {
                               </button>
                             </div>
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-700">
+
+                          <td className="pr-4 py-2 text-sm text-gray-700">
                             {item.size}
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-700">
+                          <td className="pr-4 py-2 text-sm text-gray-700">
+                            {(item?.productVariantId?.price).toLocaleString(
+                              "vi-VN"
+                            )}{" "}
+                            đ
+                          </td>
+                          <td className="pr-4 py-2 text-sm text-gray-700">
                             {(
                               (item?.productVariantId?.price || 0) *
                               (item?.quantity || 0)
@@ -481,7 +491,7 @@ const Cart = () => {
                             đ
                           </td>
                           <td
-                            className="px-4 py-2 text-sm text-red-500 cursor-pointer"
+                            className="pr-4 py-2 text-sm text-red-500 cursor-pointer"
                             id={`removeBtn-${item._id}`}
                             onClick={() =>
                               handleDeleteItem(
