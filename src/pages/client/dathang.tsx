@@ -10,6 +10,7 @@ import axiosInstance from "../../services/axiosInstance";
 import moment from "moment";
 import { useGHNMapper } from "../../utils/ghnMapping";
 import ClientLayout from "../../layouts/clientLayout";
+import axios from "axios";
 
 const Dathang = () => {
   const navigate = useNavigate();
@@ -19,7 +20,9 @@ const Dathang = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [voucher, setVoucher] = useState("");
   const [supportCode, setSupportCode] = useState("");
-  const [voucherTab, setVoucherTab] = useState<"ma-giam-gia" | "ma-cua-toi">("ma-giam-gia");
+  const [voucherTab, setVoucherTab] = useState<"ma-giam-gia" | "ma-cua-toi">(
+    "ma-giam-gia"
+  );
 
   // const cityName = userData[0].city.name;
   // const districtName = userData[0].district.name;
@@ -78,11 +81,14 @@ const Dathang = () => {
 
     const wardCode = findWardCode(wardName, districtId);
     if (wardCode) {
+      const wardId = wardCode;
       console.log("✅ Ward Code:", wardCode);
     } else {
       console.warn("❌ Không tìm thấy ward");
     }
   }, [wards]);
+  const TOKEN = "1cde9362-529a-11f0-8c19-5aba781b9b65";
+  const SHOP_ID = "5858948";
 
   const {
     data: cartItems,
@@ -179,7 +185,6 @@ const Dathang = () => {
 
         try {
           await axiosInstance.post(
-
             `${import.meta.env.VITE_API_URL}/orders`,
             payload
           );
@@ -624,13 +629,21 @@ const Dathang = () => {
                 <div>
                   <div className="flex border-b mb-2">
                     <button
-                      className={`px-4 py-2 text-sm font-semibold ${voucherTab === "ma-giam-gia" ? "border-b-2 border-black" : "text-gray-500"}`}
+                      className={`px-4 py-2 text-sm font-semibold ${
+                        voucherTab === "ma-giam-gia"
+                          ? "border-b-2 border-black"
+                          : "text-gray-500"
+                      }`}
                       onClick={() => setVoucherTab("ma-giam-gia")}
                     >
                       Mã phiếu giảm giá
                     </button>
                     <button
-                      className={`px-4 py-2 text-sm font-semibold ${voucherTab === "ma-cua-toi" ? "border-b-2 border-black" : "text-gray-500"}`}
+                      className={`px-4 py-2 text-sm font-semibold ${
+                        voucherTab === "ma-cua-toi"
+                          ? "border-b-2 border-black"
+                          : "text-gray-500"
+                      }`}
                       onClick={() => setVoucherTab("ma-cua-toi")}
                     >
                       Mã của tôi
@@ -642,7 +655,7 @@ const Dathang = () => {
                         type="text"
                         placeholder="Mã giảm giá"
                         value={voucher}
-                        onChange={e => setVoucher(e.target.value)}
+                        onChange={(e) => setVoucher(e.target.value)}
                         className="flex-1 border px-3 py-2 rounded"
                       />
                       <button
@@ -663,7 +676,7 @@ const Dathang = () => {
                     type="text"
                     placeholder="Mã nhân viên hỗ trợ"
                     value={supportCode}
-                    onChange={e => setSupportCode(e.target.value)}
+                    onChange={(e) => setSupportCode(e.target.value)}
                     className="w-full border px-3 py-2 rounded mb-2"
                   />
                 </div>
@@ -672,9 +685,10 @@ const Dathang = () => {
                 <button
                   onClick={handlePayment}
                   className={`bg-black w-full h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center lg:text-[16px] md:text-[12px] text-white font-semibold mt-4
-                    ${validItems.length === 0
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer"
+                    ${
+                      validItems.length === 0
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer"
                     } transition-all duration-300`}
                 >
                   {validItems.length === 0 ? "GIỎ HÀNG TRỐNG" : "HOÀN THÀNH"}

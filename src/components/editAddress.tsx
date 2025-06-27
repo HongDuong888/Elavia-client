@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { City, District, Ward } from "../../types/city";
+import { City, District, Ward } from "../types/city";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -25,12 +25,16 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
   const [wards, setWards] = useState<Ward[]>([]);
 
   const [selectedCity, setSelectedCity] = useState(address.city?.id || "");
-  const [selectedDistrict, setSelectedDistrict] = useState(address.district?.id || "");
+  const [selectedDistrict, setSelectedDistrict] = useState(
+    address.district?.id || ""
+  );
   const [selectedWard, setSelectedWard] = useState(address.commune?.id || "");
 
   useEffect(() => {
     axios
-      .get("https://raw.githubusercontent.com/kenzouno1/DiaGioiHanhChinhVN/master/data.json")
+      .get(
+        "https://raw.githubusercontent.com/kenzouno1/DiaGioiHanhChinhVN/master/data.json"
+      )
       .then((res) => setCities(res.data));
   }, []);
 
@@ -44,18 +48,18 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
     if (district) setWards(district.Wards);
   }, [selectedDistrict, districts]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const { name, value, type } = e.target;
-  const val = type === "checkbox" 
-    ? (e.target as HTMLInputElement).checked 
-    : value;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type } = e.target;
+    const val =
+      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 
-  setForm((prev) => ({
-    ...prev,
-    [name]: val,
-  }));
-};
-
+    setForm((prev) => ({
+      ...prev,
+      [name]: val,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +71,11 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
     };
 
     try {
-      await axios.put(`${import.meta.env.VITE_API_URL}/auth/update-shipping-address/${address._id}`, payload,
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/auth/update-shipping-address/${
+          address._id
+        }`,
+        payload,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -85,7 +93,10 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
       <div className="bg-white w-full max-w-2xl rounded-lg shadow-md p-6 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-2xl font-bold">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-2xl font-bold"
+        >
           &times;
         </button>
         <h2 className="text-2xl font-bold text-center mb-6">Sửa địa chỉ</h2>
@@ -115,7 +126,8 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
               value={selectedCity}
               onChange={(e) => {
                 setSelectedCity(e.target.value);
-                const name = cities.find((c) => c.Id === e.target.value)?.Name || "";
+                const name =
+                  cities.find((c) => c.Id === e.target.value)?.Name || "";
                 setForm((f) => ({ ...f, city: name }));
               }}
               className="border p-2 rounded"
@@ -133,7 +145,8 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
               value={selectedDistrict}
               onChange={(e) => {
                 setSelectedDistrict(e.target.value);
-                const name = districts.find((d) => d.Id === e.target.value)?.Name || "";
+                const name =
+                  districts.find((d) => d.Id === e.target.value)?.Name || "";
                 setForm((f) => ({ ...f, district: name }));
               }}
               className="border p-2 rounded"
@@ -151,7 +164,8 @@ const EditAddressModal = ({ address, onClose, onSuccess }: Props) => {
               value={selectedWard}
               onChange={(e) => {
                 setSelectedWard(e.target.value);
-                const name = wards.find((w) => w.Id === e.target.value)?.Name || "";
+                const name =
+                  wards.find((w) => w.Id === e.target.value)?.Name || "";
                 setForm((f) => ({ ...f, commune: name }));
               }}
               className="border p-2 rounded"

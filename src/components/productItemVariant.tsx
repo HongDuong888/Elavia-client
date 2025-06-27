@@ -168,7 +168,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
     <div className="relative">
       <Link
         to={`/products/${encodeURIComponent(variant._id)}`}
-        className="group relative block max-w-[200px]"
+        className="group relative block max-w-[250px]"
       >
         <img
           src={variant.images?.main.url || "/fallback.jpg"}

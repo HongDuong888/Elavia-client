@@ -29,14 +29,14 @@ const Detail_order = () => {
         <article className="mt-[98px]">
           <div className="flex gap-4 my-4">
             <div className="text-sm">
-              <a href="?action=home">Trang chủ</a>
+              <a href="/">Trang chủ</a>
             </div>
             <div className="text-sm">-</div>
             <div className="text-sm">Chi tiết đơn hàng</div>
           </div>
         </article>
         <hr className="" />
-        <div className="grid grid-cols-[0.6fr_2fr] pt-8 py-1  ">
+        <div className="grid grid-cols-[0.7fr_2.5fr] gap-8">
           {/* Sidebar Menu */}
           <MenuInfo />
 
@@ -79,7 +79,10 @@ const Detail_order = () => {
                               </div>
                             </div>
                             <p className="text-sm text-gray-600 py-0.5">
-                              Màu sắc: {item.productVariantId?.color?.colorName || item.color || "Không có"}
+                              Màu sắc:{" "}
+                              {item.productVariantId?.color?.colorName ||
+                                item.color ||
+                                "Không có"}
                             </p>
                             <p className="text-sm text-gray-600 py-0.5">
                               Size: {item.size}
@@ -88,7 +91,10 @@ const Detail_order = () => {
                               Số lượng: {item.quantity}
                             </p>
                             <p className="text-sm text-gray-600 py-0.5">
-                              SKU: {item.productVariantId?.sku || item.sku || "Không có"}
+                              SKU:{" "}
+                              {item.productVariantId?.sku ||
+                                item.sku ||
+                                "Không có"}
                             </p>
                           </div>
                           <button className="w-fit mt-2 px-4 py-1 border border-black rounded-md hover:bg-black hover:text-white transition">

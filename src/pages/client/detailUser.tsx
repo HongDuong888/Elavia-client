@@ -115,153 +115,158 @@ const DetailUser = () => {
       <article className="mt-[98px]">
         <div className="flex gap-4 my-4">
           <div className="text-sm">
-            <a href="?action=home">Trang chủ</a>
+            <a href="/">Trang chủ</a>
           </div>
           <div className="text-sm">-</div>
-          <div className="text-sm">Tài khoản của tôi</div>
+          <div className="text-sm">
+            <div className="text-sm flex gap-4">
+              <div>Thông tin tài khoản</div>
+            </div>
+          </div>
+        </div>
+        <hr className="border-t border-gray-300 my-4" />
+
+        <div className="grid grid-cols-[0.7fr_2.5fr] gap-8">
+          {/* Menu */}
+          <div className="p-4 pl-0 font-bold rounded-tl-[40px] rounded-br-[40px] border-gray-700 h-auto mt-2">
+            <MenuInfo />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-6 mt-4">Tài khoản của tôi</h2>
+            <div className="border border-blue-300 bg-blue-200 p-2 rounded-lg text-blue-900">
+              Vì chính sách an toàn thẻ, bạn không thể thay đổi SĐT, Ngày sinh,
+              Họ tên. Vui lòng liên hệ CSKH 0905898683 để được hỗ trợ
+            </div>
+
+            <div className="grid grid-cols-[2fr_1fr] gap-8 my-10">
+              <div className="grid grid-cols-[1fr_2.5fr] gap-4">
+                <div className="grid grid-rows-6 gap-4">
+                  <p className="p-4">Họ</p>
+                  <p className="p-4">Tên</p>
+                  <p className="p-4">Số điện thoại</p>
+                  <p className="p-4">Email</p>
+                  <p className="p-4">Giới tính</p>
+                  <p className="p-4">Ngày sinh</p>
+                </div>
+                <div className="grid grid-rows-6 gap-4">
+                  <input
+                    value={userInfo.first_name}
+                    className="border p-3 rounded-md text-sm"
+                    onChange={(e) =>
+                      setUserInfo({ ...userInfo, first_name: e.target.value })
+                    }
+                  />
+                  <input
+                    value={userInfo.name}
+                    className="border p-3 rounded-md text-sm"
+                    onChange={(e) =>
+                      setUserInfo({ ...userInfo, name: e.target.value })
+                    }
+                  />
+                  <input
+                    value={userInfo.phone}
+                    className="border p-3 rounded-md text-sm"
+                    onChange={(e) =>
+                      setUserInfo({ ...userInfo, phone: e.target.value })
+                    }
+                  />
+                  <input
+                    value={data?.email}
+                    disabled
+                    className="border p-3 rounded-md text-sm font-semibold bg-gray-200 opacity-50"
+                  />
+                  <div className="flex gap-2 items-center">
+                    <label className="mr-8">
+                      <input
+                        type="radio"
+                        name="gender"
+                        checked={String(userInfo?.sex) === "1"}
+                        readOnly
+                        onChange={() => setUserInfo({ ...userInfo, sex: "1" })}
+                      />{" "}
+                      Nam
+                    </label>
+                    <label className="mr-8">
+                      <input
+                        type="radio"
+                        name="gender"
+                        checked={String(userInfo?.sex) === "0"}
+                        readOnly
+                        onChange={() => setUserInfo({ ...userInfo, sex: "0" })}
+                      />{" "}
+                      Nữ
+                    </label>
+                  </div>
+                  <input
+                    type="date"
+                    value={userInfo?.date}
+                    className="border p-3 rounded-md text-sm"
+                    onChange={(e) =>
+                      setUserInfo({ ...userInfo, date: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Form đổi mật khẩu (gợi ý: nên tách riêng) */}
+              <div>
+                <div className="text-xl font-semibold mb-4">Đổi mật khẩu</div>
+                <form onSubmit={handleSubmit}>
+                  <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
+                    <input
+                      type="password"
+                      placeholder="Mật khẩu cũ"
+                      className="text-sm outline-none w-full border-0"
+                      value={oldpassword}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
+                    <input
+                      type="password"
+                      placeholder="Mật khẩu mới"
+                      className="text-sm outline-none w-full border-0"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="border h-11 flex items-center p-4 rounded-lg">
+                    <input
+                      type="password"
+                      placeholder="Nhập lại mật khẩu mới"
+                      className="text-sm outline-none w-full border-0"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-4">
+                    {error && <p style={{ color: "red" }}>{error}</p>}
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`border border-black rounded-tl-[15px] rounded-br-[15px] w-full h-[50px] flex justify-center items-center transition-all duration-300 font-semibold ${
+                        isLoading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "hover:bg-black hover:text-white"
+                      }`}
+                    >
+                      {isLoading ? "Đang xử lý..." : "ĐỔI MẬT KHẨU"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div>
+                <button
+                  onClick={handleUpdate}
+                  className="bg-black w-full h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center text-white font-semibold hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer transition-all duration-300"
+                >
+                  CẬP NHẬT
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
-      <hr className="" />
-      <div className="flex pt-8 py-1 gap-12">
-        {/* Sidebar Menu */}
-        <MenuInfo />
-
-        {/* Main Content: Orders Table */}
-        <div>
-          <div className="font-semibold text-2xl mb-4">TÀI KHOẢN CỦA TÔI</div>
-          <div className="border border-blue-300 bg-blue-200 p-2 rounded-lg text-blue-900">
-            Vì chính sách an toàn thẻ, bạn không thể thay đổi SĐT, Ngày sinh, Họ
-            tên. Vui lòng liên hệ CSKH 0905898683 để được hỗ trợ
-          </div>
-
-          <div className="grid grid-cols-[2fr_1fr] gap-8 my-10">
-            <div className="grid grid-cols-[1fr_2.5fr] gap-4">
-              <div className="grid grid-rows-6 gap-4">
-                <p className="p-4">Họ</p>
-                <p className="p-4">Tên</p>
-                <p className="p-4">Số điện thoại</p>
-                <p className="p-4">Email</p>
-                <p className="p-4">Giới tính</p>
-                <p className="p-4">Ngày sinh</p>
-              </div>
-              <div className="grid grid-rows-6 gap-4">
-                <input
-                  value={userInfo.first_name}
-                  className="border p-3 rounded-md text-sm"
-                  onChange={(e) =>
-                    setUserInfo({ ...userInfo, first_name: e.target.value })
-                  }
-                />
-                <input
-                  value={userInfo.name}
-                  className="border p-3 rounded-md text-sm"
-                  onChange={(e) =>
-                    setUserInfo({ ...userInfo, name: e.target.value })
-                  }
-                />
-                <input
-                  value={userInfo.phone}
-                  className="border p-3 rounded-md text-sm"
-                  onChange={(e) =>
-                    setUserInfo({ ...userInfo, phone: e.target.value })
-                  }
-                />
-                <input
-                  value={data?.email}
-                  disabled
-                  className="border p-3 rounded-md text-sm font-semibold bg-gray-200 opacity-50"
-                />
-                <div className="flex gap-2 items-center">
-                  <label className="mr-8">
-                    <input
-                      type="radio"
-                      name="gender"
-                      checked={String(userInfo?.sex) === "1"}
-                      readOnly
-                      onChange={() => setUserInfo({ ...userInfo, sex: "1" })}
-                    />{" "}
-                    Nam
-                  </label>
-                  <label className="mr-8">
-                    <input
-                      type="radio"
-                      name="gender"
-                      checked={String(userInfo?.sex) === "0"}
-                      readOnly
-                      onChange={() => setUserInfo({ ...userInfo, sex: "0" })}
-                    />{" "}
-                    Nữ
-                  </label>
-                </div>
-                <input
-                  type="date"
-                  value={userInfo?.date}
-                  className="border p-3 rounded-md text-sm"
-                  onChange={(e) =>
-                    setUserInfo({ ...userInfo, date: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Form đổi mật khẩu (gợi ý: nên tách riêng) */}
-            <div>
-              <div className="text-xl font-semibold mb-4">Đổi mật khẩu</div>
-              <form onSubmit={handleSubmit}>
-                <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
-                  <input
-                    type="password"
-                    placeholder="Mật khẩu cũ"
-                    className="text-sm outline-none w-full border-0"
-                    value={oldpassword}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
-                  <input
-                    type="password"
-                    placeholder="Mật khẩu mới"
-                    className="text-sm outline-none w-full border-0"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                </div>
-                <div className="border h-11 flex items-center p-4 rounded-lg">
-                  <input
-                    type="password"
-                    placeholder="Nhập lại mật khẩu mới"
-                    className="text-sm outline-none w-full border-0"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                </div>
-                <div className="mt-4">
-                  {error && <p style={{ color: "red" }}>{error}</p>}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className={`border border-black rounded-tl-[15px] rounded-br-[15px] w-full h-[50px] flex justify-center items-center transition-all duration-300 font-semibold ${
-                      isLoading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "hover:bg-black hover:text-white"
-                    }`}
-                  >
-                    {isLoading ? "Đang xử lý..." : "ĐỔI MẬT KHẨU"}
-                  </button>
-                </div>
-              </form>
-            </div>
-            <div>
-              <button
-                onClick={handleUpdate}
-                className="bg-black w-full h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center text-white font-semibold hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer transition-all duration-300"
-              >
-                CẬP NHẬT
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </ClientLayout>
   );
 };

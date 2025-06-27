@@ -8,7 +8,7 @@ import { z } from "zod";
 import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import EditAddressModal from "./editAddress";
+import EditAddressModal from "../../components/editAddress";
 
 const AddressSchema = z.object({
   receiver_name: z.string().min(2, "Tên người nhận tối thiểu 2 ký tự"),
@@ -57,8 +57,8 @@ const Address = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [error, setError] = useState("");
-const [showEditModal, setShowEditModal] = useState(false);
-const [editAddress, setEditAddress] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editAddress, setEditAddress] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,13 +95,13 @@ const [editAddress, setEditAddress] = useState(null);
       setSelectedWard("");
     },
     onError: (error: AxiosError<ErrorResponse>) => {
-    const errorData = error.response?.data;
-    if (errorData?.errors) {
-      toast.error("Lỗi validation: " + errorData.errors.join(", "));
-    } else {
-      toast.error("Có lỗi xảy ra khi thêm địa chỉ!");
-    }
-  },
+      const errorData = error.response?.data;
+      if (errorData?.errors) {
+        toast.error("Lỗi validation: " + errorData.errors.join(", "));
+      } else {
+        toast.error("Có lỗi xảy ra khi thêm địa chỉ!");
+      }
+    },
   });
 
   const handleChange = (
@@ -199,261 +199,275 @@ const [editAddress, setEditAddress] = useState(null);
   };
 
   const handleSetDefault = async (id: string) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Bạn chưa đăng nhập!");
-      return;
-    }
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Bạn chưa đăng nhập!");
+        return;
+      }
 
-    await axios.put(
-      `${import.meta.env.VITE_API_URL}/auth/address/default/${id}`,
-      {},
-      {
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/auth/address/default/${id}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("Cập nhật địa chỉ mặc định thành công!");
+    } catch (err) {
+      toast.error("Không thể cập nhật địa chỉ mặc định");
+    }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Bạn chưa đăng nhập!");
+        return;
+      }
+
+      await axios.delete(`${import.meta.env.VITE_API_URL}/auth/address/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
 
-    queryClient.invalidateQueries({ queryKey: ["users"] });
-    toast.success("Cập nhật địa chỉ mặc định thành công!");
-  } catch (err) {
-    toast.error("Không thể cập nhật địa chỉ mặc định");
-  }
-};
-
-const handleDeleteAddress = async (id: string) => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Bạn chưa đăng nhập!");
-      return;
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      toast.success("Xoá địa chỉ thành công!");
+    } catch (err) {
+      toast.error("Không thể xoá địa chỉ");
     }
+  };
 
-    await axios.delete(`${import.meta.env.VITE_API_URL}/auth/address/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    queryClient.invalidateQueries({ queryKey: ["users"] });
-    toast.success("Xoá địa chỉ thành công!");
-  } catch (err) {
-    toast.error("Không thể xoá địa chỉ");
-  }
-};
-
-const sortedAddresses = data?.shipping_addresses?.sort((a: any, b: any) =>
-  a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1
-);
+  const sortedAddresses = data?.shipping_addresses?.sort((a: any, b: any) =>
+    a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1
+  );
 
   return (
-    <>
-      <ClientLayout>
-        <article className="mb-8 mt-8 ">
-          <hr />
-          <nav>
-            <div className="flex gap-4 mt-[80px] mb-6">
-              <div className="text-base">
-                <a href="?action=home">Trang chủ</a>
-              </div>
-              <div className="text-base">-</div>
-              <div className="text-base">Danh sách địa chỉ</div>
+    <ClientLayout>
+      <article className="mt-[98px]">
+        <div className="flex gap-4 my-4">
+          <div className="text-sm">
+            <a href="/">Trang chủ</a>
+          </div>
+          <div className="text-sm">-</div>
+          <div className="text-sm">
+            <div className="text-sm flex gap-4">
+              <div>Sổ địa chỉ</div>
             </div>
-          </nav>
-          <hr className="border-t-1 border-gray-100 " />
-          <div className="grid grid-cols-[1fr_2.5fr]">
-            <div className="p-8 w-[300px] font-bold rounded-tl-[40px] rounded-br-[40px] h-auto mt-2 ">
-              <nav>
-                <MenuInfo />
-              </nav>
-            </div>
-            <div className=" mt-8">
-              <div className="grid grid-cols-2 gap-4">
-                <h2 className="text-2xl font-bold mb-4">Sổ địa chỉ</h2>
-                <div className=" p-2 flex text-black  text-[18px] mr-20  ">
-                  <div className="text-2xl font-bold mb-4">Thêm địa chỉ</div>
-                </div>
+          </div>
+        </div>
+        <hr className="border-t border-gray-300 my-4" />
+
+        <div className="grid grid-cols-[0.7fr_2.5fr] gap-8">
+          {/* Menu */}
+          <div className="p-4 pl-0 font-bold rounded-tl-[40px] rounded-br-[40px] border-gray-700 h-auto mt-2">
+            <MenuInfo />
+          </div>
+          <div className="">
+            <div className="grid grid-cols-2 gap-4">
+              <h2 className="text-2xl font-bold mb-6 mt-4">Sổ địa chỉ</h2>
+              <div className=" p-2 flex text-black  text-[18px] mr-20  ">
+                <h2 className="text-2xl font-bold mt-2 mb-6">Thêm địa chỉ</h2>
               </div>
-              <div className="grid grid-cols-2 gap-4 ">
-                <div>
-                  {sortedAddresses?.map((address: any) => (
-                    <div key={address._id} className="...">
+            </div>
+            <div className="grid grid-cols-2 gap-4 ">
+              <div>
+                {sortedAddresses?.map((address: any) => (
+                  <div
+                    key={address._id}
+                    className="border-[1px] rounded-tl-2xl rounded-br-2xl mb-8"
+                  >
+                    <div className="">
                       <div className="flex justify-between">
-                        <div className="p-6 font-semibold">{address.receiver_name}</div>
+                        <div className="p-6 pt-4 font-semibold">
+                          {address.receiver_name}
+                        </div>
                         <div className="flex gap-2 p-4">
-                          {/* Nút chọn mặc định hoặc hiển thị đã mặc định */}
                           {address.isDefault ? (
-                            <span className="bg-black text-white px-3 py-2 text-sm rounded">Mặc định</span>
+                            <div className="bg-black text-white px-3 py-0 text-sm rounded-tl-[15px] rounded-br-[15px] flex justify-center items-center">
+                              Mặc định
+                            </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleSetDefault(address._id)}
-                              className="text-sm border border-black px-3 py-1 rounded hover:bg-black hover:text-white transition"
-                            >
-                              Chọn làm mặc định
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleSetDefault(address._id)}
+                                className="border border-black px-3 py-0 text-sm rounded-tl-[15px] rounded-br-[15px] w-full h-[40px] flex justify-center items-center hover:bg-black hover:text-white transition-all duration-300"
+                              >
+                                Mặc định
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteAddress(address._id)}
+                                className="px-2 hover:underline text-sm"
+                              >
+                                Xóa
+                              </button>
+                            </>
                           )}
-                           <button
-                            type="button"
-                            onClick={() => handleDeleteAddress(address._id)}
-                            className="px-3 py-1 text-sm border border-red-500 text-red-500 rounded hover:bg-red-500 hover:text-white transition"
-                          >
-                            Xóa
-                          </button>
+
                           <button
                             type="button"
                             onClick={() => {
                               setEditAddress(address); // set địa chỉ được chọn
-                              setShowEditModal(true);  // mở modal
+                              setShowEditModal(true); // mở modal
                             }}
-                            className="px-3 py-1 text-sm border border-red-500 text-red-500 rounded hover:bg-red-500 hover:text-white transition"
+                            className="px-2 hover:underline text-sm"
                           >
                             Sửa
                           </button>
                         </div>
                       </div>
-                      <div className="px-6 mb-2">Điện thoại: {address.phone}</div>
-                        <div className="px-6 mb-2">
-                          Địa chỉ: {address.address}, {address.commune?.name}, {address.district?.name}, {address.city?.name}
-                        </div>
+                      <div className="px-6 mb-2">
+                        Điện thoại: {address.phone}
+                      </div>
+                      <div className="px-6 mb-4">
+                        Địa chỉ: {address.address}, {address.commune?.name},{" "}
+                        {address.district?.name}, {address.city?.name}
+                      </div>
                     </div>
-                  ))}
-
-                </div>
-                <div>
-                  <form onSubmit={handleSubmit}>
-                    <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
-                      <input
-                        type="text"
-                        name="receiver_name"
-                        value={formData.receiver_name}
-                        onChange={handleChange}
-                        placeholder="Họ tên"
-                        className="text-sm outline-none w-full border-0"
-                      />
-                      {errors?.fieldErrors?.receiver_name && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.fieldErrors.receiver_name[0]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
-                      <input
-                        type="text"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="Số điện thoại"
-                        className="text-sm outline-none w-full border-0"
-                      />
-                      {errors?.fieldErrors?.phone && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.fieldErrors.phone[0]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                      <select
-                        value={selectedCity}
-                        onChange={handleCityChange}
-                        className="text-sm outline-none w-full border-0"
-                        required
-                      >
-                        <option value="">Chọn tỉnh/thành phố</option>
-                        {cities.map((city) => (
-                          <option key={city.Id} value={city.Id}>
-                            {city.Name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors?.fieldErrors?.city && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.fieldErrors.city[0]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                      <select
-                        value={selectedDistrict}
-                        onChange={handleDistrictChange}
-                        disabled={!selectedCity}
-                        className="text-sm outline-none w-full border-0"
-                        required
-                      >
-                        <option value="">Chọn quận/huyện</option>
-                        {districts.map((district) => (
-                          <option key={district.Id} value={district.Id}>
-                            {district.Name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors?.fieldErrors?.district && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.fieldErrors.district[0]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                      <select
-                        value={selectedWard}
-                        onChange={handleWardChange}
-                        disabled={!selectedDistrict}
-                        className="text-sm outline-none w-full border-0"
-                        required
-                      >
-                        <option value="">Chọn phường/xã</option>
-                        {wards.map((ward) => (
-                          <option key={ward.Id} value={ward.Id}>
-                            {ward.Name}
-                          </option>
-                        ))}
-                      </select>
-                      {errors?.fieldErrors?.commune && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.fieldErrors.commune[0]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                      <input
-                        type="text"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        placeholder="Địa chỉ"
-                        className="text-sm outline-none w-full border-0"
-                      />
-                      {errors?.fieldErrors?.address && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.fieldErrors.address[0]}
-                        </p>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <button
-                        type="submit"
-                        className="border border-black rounded-tl-[15px] rounded-br-[15px] w-full h-[50px] flex justify-center items-center hover:bg-black hover:text-white transition-all duration-300 font-semibold"
-                      >
-                        Thêm địa chỉ
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <form onSubmit={handleSubmit}>
+                  <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
+                    <input
+                      type="text"
+                      name="receiver_name"
+                      value={formData.receiver_name}
+                      onChange={handleChange}
+                      placeholder="Họ tên"
+                      className="text-sm outline-none w-full border-0"
+                    />
+                    {errors?.fieldErrors?.receiver_name && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fieldErrors.receiver_name[0]}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
+                    <input
+                      type="text"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Số điện thoại"
+                      className="text-sm outline-none w-full border-0"
+                    />
+                    {errors?.fieldErrors?.phone && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fieldErrors.phone[0]}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
+                    <select
+                      value={selectedCity}
+                      onChange={handleCityChange}
+                      className="text-sm outline-none w-full border-0"
+                      required
+                    >
+                      <option value="">Chọn tỉnh/thành phố</option>
+                      {cities.map((city) => (
+                        <option key={city.Id} value={city.Id}>
+                          {city.Name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors?.fieldErrors?.city && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fieldErrors.city[0]}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
+                    <select
+                      value={selectedDistrict}
+                      onChange={handleDistrictChange}
+                      disabled={!selectedCity}
+                      className="text-sm outline-none w-full border-0"
+                      required
+                    >
+                      <option value="">Chọn quận/huyện</option>
+                      {districts.map((district) => (
+                        <option key={district.Id} value={district.Id}>
+                          {district.Name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors?.fieldErrors?.district && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fieldErrors.district[0]}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
+                    <select
+                      value={selectedWard}
+                      onChange={handleWardChange}
+                      disabled={!selectedDistrict}
+                      className="text-sm outline-none w-full border-0"
+                      required
+                    >
+                      <option value="">Chọn phường/xã</option>
+                      {wards.map((ward) => (
+                        <option key={ward.Id} value={ward.Id}>
+                          {ward.Name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors?.fieldErrors?.commune && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fieldErrors.commune[0]}
+                      </p>
+                    )}
+                  </div>
+                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Địa chỉ"
+                      className="text-sm outline-none w-full border-0"
+                    />
+                    {errors?.fieldErrors?.address && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.fieldErrors.address[0]}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      type="submit"
+                      className="border border-black rounded-tl-[15px] rounded-br-[15px] w-full h-[50px] flex justify-center items-center hover:bg-black hover:text-white transition-all duration-300 font-semibold"
+                    >
+                      Thêm địa chỉ
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
-          {showEditModal && editAddress && (
-            <EditAddressModal
-              address={editAddress}
-              onClose={() => setShowEditModal(false)}
-              onSuccess={() => queryClient.invalidateQueries({ queryKey: ["users"] })}
-            />
-          )}
-        </article>
-      </ClientLayout>
-    </>
+        </div>
+        {showEditModal && editAddress && (
+          <EditAddressModal
+            address={editAddress}
+            onClose={() => setShowEditModal(false)}
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ["users"] })
+            }
+          />
+        )}
+      </article>
+    </ClientLayout>
   );
 };
 

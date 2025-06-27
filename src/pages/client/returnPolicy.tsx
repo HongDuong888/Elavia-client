@@ -7,7 +7,7 @@ const ReturnPolicy = () => {
       <ClientLayout>
         <div className="flex gap-4 my-4 mt-[98px]">
           <div className="text-sm">
-            <a href="?action=home">Trang chủ</a>
+            <a href="/">Trang chủ</a>
           </div>
           <div className="text-sm">-</div>
           <div className="text-sm">Chính sách đổi trả</div>

@@ -161,7 +161,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
         <article className="mt-[98px]">
           <div className="flex gap-4 my-4">
             <div className="text-sm">
-              <a href="?action=home">Trang chủ</a>
+              <a href="/">Trang chủ</a>
             </div>
 
             {categories?.data.map((item: any) => (

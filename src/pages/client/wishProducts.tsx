@@ -71,8 +71,9 @@ const WishProducts = () => {
       <article className="mt-[98px]">
         <div className="flex gap-4 my-4">
           <div className="text-sm">
-            <a href="?action=home">Trang chủ</a>
+            <a href="/">Trang chủ</a>
           </div>
+          <div className="text-sm">-</div>
           <div className="text-sm">
             <div className="text-sm flex gap-4">
               <div>Sản phẩm yêu thích</div>
@@ -81,9 +82,9 @@ const WishProducts = () => {
         </div>
         <hr className="border-t border-gray-300 my-4" />
 
-        <div className="grid grid-cols-[1fr_2.5fr] gap-12">
+        <div className="grid grid-cols-[0.7fr_2.5fr] gap-8">
           {/* Menu */}
-          <div className="p-4 w-[300px] font-bold rounded-tl-[40px] rounded-br-[40px] border-gray-700 h-auto mt-2 ml-16">
+          <div className="p-4 pl-0 font-bold rounded-tl-[40px] rounded-br-[40px] border-gray-700 h-auto mt-2">
             <MenuInfo />
           </div>
 
