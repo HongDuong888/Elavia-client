@@ -9,6 +9,7 @@ import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import EditAddressModal from "../../components/editAddress";
+import AddAddressModal from "../../components/addAddress";
 
 const AddressSchema = z.object({
   receiver_name: z.string().min(2, "Tên người nhận tối thiểu 2 ký tự"),
@@ -22,6 +23,7 @@ const AddressSchema = z.object({
   district: z.string().min(1, "Cần chọn quận/huyện"),
   commune: z.string().min(1, "Cần chọn phường/xã"),
   address: z.string().min(2, "Địa chỉ tối thiểu 2 ký tự"),
+  type: z.enum(["home", "company"]),
 });
 
 type AddressFormDta = z.infer<typeof AddressSchema>;
@@ -44,6 +46,7 @@ const Address = () => {
     district: "",
     commune: "",
     address: "",
+    type: "home",
   });
 
   const [errors, setErrors] = useState<
@@ -58,7 +61,10 @@ const Address = () => {
   const [selectedWard, setSelectedWard] = useState<string>("");
   const [error, setError] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+
   const [editAddress, setEditAddress] = useState(null);
+  const [addAddress, setAddAddress] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +95,7 @@ const Address = () => {
         district: "",
         commune: "",
         address: "",
+        type: "home",
       });
       setSelectedCity("");
       setSelectedDistrict("");
@@ -181,7 +188,7 @@ const Address = () => {
           name: communeObj?.Name || "",
         },
         address: validatedData.address,
-        isDefault: false,
+        type: validatedData.type,
       };
 
       // Gửi payload qua mutation
@@ -245,7 +252,7 @@ const Address = () => {
   };
 
   const sortedAddresses = data?.shipping_addresses?.sort((a: any, b: any) =>
-    a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1
+    a._id === data.defaultAddress ? -1 : b._id === data.defaultAddress ? 1 : 0
   );
 
   return (
@@ -270,29 +277,40 @@ const Address = () => {
             <MenuInfo />
           </div>
           <div className="">
-            <div className="grid grid-cols-2 gap-4">
-              <h2 className="text-2xl font-bold mb-6 mt-4">Sổ địa chỉ</h2>
-              <div className=" p-2 flex text-black  text-[18px] mr-20  ">
-                <h2 className="text-2xl font-bold mt-2 mb-6">Thêm địa chỉ</h2>
-              </div>
+            <div className="flex justify-between content-center gap-4 mt-4 mb-4">
+              <h2 className="text-2xl font-bold">Sổ địa chỉ</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddModal(true); // mở modal
+                }}
+                className=" px-3 bg-black text-white py-0 text-sm rounded-tl-[15px] rounded-br-[15px] w-40 h-[40px] flex justify-center items-center hover:bg-white hover:text-black hover:border hover:border-black transition-all duration-300"
+              >
+                + Thêm địa chỉ
+              </button>
             </div>
-            <div className="grid grid-cols-2 gap-4 ">
-              <div>
-                {sortedAddresses?.map((address: any) => (
-                  <div
-                    key={address._id}
-                    className="border-[1px] rounded-tl-2xl rounded-br-2xl mb-8"
-                  >
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedAddresses?.map((address: any) => (
+                <div
+                  key={address._id}
+                  className="border-[1px] rounded-tl-2xl rounded-br-2xl mb-4"
+                >
+                  <div key={address._id} className="">
                     <div className="">
                       <div className="flex justify-between">
-                        <div className="p-6 pt-4 font-semibold">
+                        <div className="p-6 pt-4 pb-2 font-semibold">
                           {address.receiver_name}
                         </div>
+
                         <div className="flex gap-2 p-4">
-                          {address.isDefault ? (
-                            <div className="bg-black text-white px-3 py-0 text-sm rounded-tl-[15px] rounded-br-[15px] flex justify-center items-center">
+                          {data.defaultAddress == address._id ? (
+                            <button
+                              disabled
+                              className="bg-black text-white px-3 py-0 text-sm rounded-tl-[15px] rounded-br-[15px] w-full h-[40px] flex justify-center items-center"
+                            >
                               Mặc định
-                            </div>
+                            </button>
                           ) : (
                             <>
                               <button
@@ -325,142 +343,37 @@ const Address = () => {
                         </div>
                       </div>
                       <div className="px-6 mb-2">
+                        Loại địa chỉ:{" "}
+                        {address.type === "home" ? "Nhà ở" : "Công ty"}
+                      </div>
+                      <div className="px-6 mb-2">
                         Điện thoại: {address.phone}
                       </div>
                       <div className="px-6 mb-4">
-                        Địa chỉ: {address.address}, {address.commune?.name},{" "}
+                        Địa chỉ: {address.address}, {address.commune?.name},
                         {address.district?.name}, {address.city?.name}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div>
-                <form onSubmit={handleSubmit}>
-                  <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
-                    <input
-                      type="text"
-                      name="receiver_name"
-                      value={formData.receiver_name}
-                      onChange={handleChange}
-                      placeholder="Họ tên"
-                      className="text-sm outline-none w-full border-0"
-                    />
-                    {errors?.fieldErrors?.receiver_name && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.fieldErrors.receiver_name[0]}
-                      </p>
-                    )}
-                  </div>
-                  <div className="border h-11 flex items-center p-4 mb-4 rounded-lg">
-                    <input
-                      type="text"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Số điện thoại"
-                      className="text-sm outline-none w-full border-0"
-                    />
-                    {errors?.fieldErrors?.phone && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.fieldErrors.phone[0]}
-                      </p>
-                    )}
-                  </div>
-                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                    <select
-                      value={selectedCity}
-                      onChange={handleCityChange}
-                      className="text-sm outline-none w-full border-0"
-                      required
-                    >
-                      <option value="">Chọn tỉnh/thành phố</option>
-                      {cities.map((city) => (
-                        <option key={city.Id} value={city.Id}>
-                          {city.Name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors?.fieldErrors?.city && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.fieldErrors.city[0]}
-                      </p>
-                    )}
-                  </div>
-                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                    <select
-                      value={selectedDistrict}
-                      onChange={handleDistrictChange}
-                      disabled={!selectedCity}
-                      className="text-sm outline-none w-full border-0"
-                      required
-                    >
-                      <option value="">Chọn quận/huyện</option>
-                      {districts.map((district) => (
-                        <option key={district.Id} value={district.Id}>
-                          {district.Name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors?.fieldErrors?.district && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.fieldErrors.district[0]}
-                      </p>
-                    )}
-                  </div>
-                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                    <select
-                      value={selectedWard}
-                      onChange={handleWardChange}
-                      disabled={!selectedDistrict}
-                      className="text-sm outline-none w-full border-0"
-                      required
-                    >
-                      <option value="">Chọn phường/xã</option>
-                      {wards.map((ward) => (
-                        <option key={ward.Id} value={ward.Id}>
-                          {ward.Name}
-                        </option>
-                      ))}
-                    </select>
-                    {errors?.fieldErrors?.commune && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.fieldErrors.commune[0]}
-                      </p>
-                    )}
-                  </div>
-                  <div className="border h-11 flex items-center p-4 rounded-lg mb-4">
-                    <input
-                      type="text"
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      placeholder="Địa chỉ"
-                      className="text-sm outline-none w-full border-0"
-                    />
-                    {errors?.fieldErrors?.address && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.fieldErrors.address[0]}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="submit"
-                      className="border border-black rounded-tl-[15px] rounded-br-[15px] w-full h-[50px] flex justify-center items-center hover:bg-black hover:text-white transition-all duration-300 font-semibold"
-                    >
-                      Thêm địa chỉ
-                    </button>
-                  </div>
-                </form>
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
         {showEditModal && editAddress && (
           <EditAddressModal
+            defaultAddressId={data.defaultAddress}
             address={editAddress}
             onClose={() => setShowEditModal(false)}
+            onSuccess={() =>
+              queryClient.invalidateQueries({ queryKey: ["users"] })
+            }
+          />
+        )}
+        {showAddModal && (
+          <AddAddressModal
+            defaultAddressId={data.defaultAddress}
+            onClose={() => setShowAddModal(false)}
             onSuccess={() =>
               queryClient.invalidateQueries({ queryKey: ["users"] })
             }

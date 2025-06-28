@@ -269,7 +269,7 @@ const Footer = () => {
 
         {/* Cột 3: Nhận thông tin và Download App */}
         <div>
-          <div className="border-[4px] border-[#9999]-500 p-4 rounded-tl-[45px] rounded-br-[45px]">
+          <div className="border-[1px] border-[#9999]-500 p-4 rounded-tl-[45px] rounded-br-[45px]">
             <p className="font-[600] lg:text-lg md:text-[16px] pt-2 pr-4 pb-4">
               Nhận thông tin các chương trình của ELA via
             </p>

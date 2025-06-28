@@ -12,7 +12,6 @@ const Detail_order = () => {
     queryKey: ["orders", id],
     queryFn: () => getById({ namespace: "orders", id: id }),
   });
-  // console.log("🚀 ~ constDetail_order= ~ data:", data);
   if (isLoading) {
     return <Loading />;
   }
@@ -24,28 +23,37 @@ const Detail_order = () => {
     );
   }
   return (
-    <>
-      <ClientLayout>
-        <article className="mt-[98px]">
-          <div className="flex gap-4 my-4">
-            <div className="text-sm">
-              <a href="/">Trang chủ</a>
-            </div>
-            <div className="text-sm">-</div>
-            <div className="text-sm">Chi tiết đơn hàng</div>
+    <ClientLayout>
+      <article className="mt-[98px]">
+        <div className="flex gap-4 my-4">
+          <div className="text-sm">
+            <a href="/">Trang chủ</a>
           </div>
-        </article>
-        <hr className="" />
-        <div className="grid grid-cols-[0.7fr_2.5fr] gap-8">
-          {/* Sidebar Menu */}
-          <MenuInfo />
+          <div className="text-sm">-</div>
+          <div className="text-sm">
+            <div className="text-sm flex gap-4">
+              <div>Chi tiết đơn hàng</div>
+            </div>
+          </div>
+          <div className="text-sm">-</div>
+          <div className="text-sm">
+            <div className="text-sm flex gap-4">
+              <div>{data.orderId}</div>
+            </div>
+          </div>
+        </div>
+        <hr className="border-t border-gray-300 my-4" />
 
-          {/* Main Content: Orders Table */}
-          <div className="  p-4">
+        <div className="grid grid-cols-[0.7fr_2.5fr] gap-8">
+          {/* Menu */}
+          <div className="p-4 pl-0 font-bold rounded-tl-[40px] rounded-br-[40px] border-gray-700 h-auto mt-2">
+            <MenuInfo />
+          </div>
+          <div className="p-4 pl-0">
             <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-semibold">
-                CHI TIẾT ĐƠN HÀNG{" "}
-                <span className="text-red-600">{data.orderId}</span>
+                Chi tiết đơn hàng
+                <span className="text-red-600"> {data.orderId}</span>
               </h2>
               <button className="text-sm text-red-500 hover:underline">
                 {data.status}
@@ -175,8 +183,8 @@ const Detail_order = () => {
             </div>
           </div>
         </div>
-      </ClientLayout>
-    </>
+      </article>
+    </ClientLayout>
   );
 };
 

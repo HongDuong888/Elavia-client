@@ -4,39 +4,31 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 interface Props {
-  address: any;
   defaultAddressId: string | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-const EditAddressModal = ({
-  address,
-  defaultAddressId,
-  onClose,
-  onSuccess,
-}: Props) => {
+const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
   const [form, setForm] = useState({
-    receiver_name: address.receiver_name || "",
-    phone: address.phone || "",
-    city: address.city?.name || "",
-    district: address.district?.name || "",
-    commune: address.commune?.name || "",
-    address: address.address || "",
-    type: address.type || "",
+    receiver_name: "",
+    phone: "",
+    city: "",
+    district: "",
+    commune: "",
+    address: "",
+    type: "home",
   });
 
-  const [isDefault, setIsDefault] = useState(address._id === defaultAddressId);
+  const [isDefault, setIsDefault] = useState(false);
 
   const [cities, setCities] = useState<City[]>([]);
   const [districts, setDistricts] = useState<District[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
 
-  const [selectedCity, setSelectedCity] = useState(address.city?.id || "");
-  const [selectedDistrict, setSelectedDistrict] = useState(
-    address.district?.id || ""
-  );
-  const [selectedWard, setSelectedWard] = useState(address.commune?.id || "");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedWard, setSelectedWard] = useState("");
 
   useEffect(() => {
     axios
@@ -59,13 +51,10 @@ const EditAddressModal = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type } = e.target;
-    const val =
-      type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
-
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: val,
+      [name]: value,
     }));
   };
 
@@ -80,10 +69,9 @@ const EditAddressModal = ({
     };
 
     try {
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/auth/update-shipping-address/${
-          address._id
-        }`,
+      // Gửi request thêm địa chỉ
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/add-shipping-address`,
         payload,
         {
           headers: {
@@ -92,10 +80,14 @@ const EditAddressModal = ({
         }
       );
 
-      // Nếu người dùng chọn làm mặc định thì gọi thêm API
-      if (isDefault && address._id !== defaultAddressId) {
+      const newAddresses = res.data.data;
+      const newAddressId = newAddresses?.[newAddresses.length - 1]?._id;
+
+      if ((isDefault || !defaultAddressId) && newAddressId) {
         await axios.put(
-          `${import.meta.env.VITE_API_URL}/auth/address/default/${address._id}`,
+          `${
+            import.meta.env.VITE_API_URL
+          }/auth/address/default/${newAddressId}`,
           {},
           {
             headers: {
@@ -104,12 +96,11 @@ const EditAddressModal = ({
           }
         );
       }
-
-      toast.success("Cập nhật địa chỉ thành công!");
+      toast.success("Thêm địa chỉ thành công!");
       onSuccess();
       onClose();
-    } catch (err) {
-      toast.error("Cập nhật thất bại");
+    } catch (error) {
+      toast.error("Thêm địa chỉ thất bại!");
     }
   };
 
@@ -122,7 +113,9 @@ const EditAddressModal = ({
         >
           &times;
         </button>
-        <h2 className="text-2xl font-bold text-center mb-6">Sửa địa chỉ</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">
+          Thêm địa chỉ mới
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-4">
             <input
@@ -132,6 +125,7 @@ const EditAddressModal = ({
               onChange={handleChange}
               placeholder="Họ tên"
               className="border w-full p-2 rounded"
+              required
             />
             <input
               type="text"
@@ -140,6 +134,7 @@ const EditAddressModal = ({
               onChange={handleChange}
               placeholder="Số điện thoại"
               className="border w-full p-2 rounded"
+              required
             />
           </div>
 
@@ -154,6 +149,7 @@ const EditAddressModal = ({
                 setForm((f) => ({ ...f, city: name }));
               }}
               className="border p-2 rounded"
+              required
             >
               <option value="">Chọn tỉnh/thành</option>
               {cities.map((c) => (
@@ -173,6 +169,7 @@ const EditAddressModal = ({
                 setForm((f) => ({ ...f, district: name }));
               }}
               className="border p-2 rounded"
+              required
             >
               <option value="">Chọn quận/huyện</option>
               {districts.map((d) => (
@@ -192,6 +189,7 @@ const EditAddressModal = ({
                 setForm((f) => ({ ...f, commune: name }));
               }}
               className="border p-2 rounded"
+              required
             >
               <option value="">Chọn phường/xã</option>
               {wards.map((w) => (
@@ -209,7 +207,9 @@ const EditAddressModal = ({
             onChange={handleChange}
             placeholder="Địa chỉ chi tiết"
             className="border w-full p-2 rounded"
+            required
           />
+
           <select
             name="type"
             value={form.type}
@@ -235,7 +235,7 @@ const EditAddressModal = ({
             type="submit"
             className="w-full bg-black text-white py-2 rounded hover:opacity-90 font-semibold"
           >
-            Cập nhật địa chỉ
+            Thêm địa chỉ
           </button>
         </form>
       </div>
@@ -243,4 +243,4 @@ const EditAddressModal = ({
   );
 };
 
-export default EditAddressModal;
+export default AddAddressModal;

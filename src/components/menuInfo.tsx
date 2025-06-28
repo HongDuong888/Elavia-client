@@ -6,7 +6,7 @@ const MenuInfo = () => {
   const { auth } = useAuth();
 
   return (
-    <div className="py-6 px-4 font-bold border-2 border-gray-300 rounded-tl-[40px] rounded-br-[40px] sm:border-1">
+    <div className="py-6 px-4 font-bold border-[1px] border-gray-300 rounded-tl-[40px] rounded-br-[40px] sm:border-1">
       <nav>
         <div className="relative font-semibold text-gray-500 flex items-center gap-2 p-4 cursor-pointer group">
           <img
