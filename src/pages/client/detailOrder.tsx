@@ -1,13 +1,19 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import MenuInfo from "../../components/menuInfo";
 import { useQuery } from "@tanstack/react-query";
 import { getById } from "../../api/provider";
 import Loading from "../../components/loading";
 import ClientLayout from "../../layouts/clientLayout";
+import { useAddToCart } from "../../hooks/useAddToCart";
+import { useAuth } from "../../context/auth.context";
+import { toast } from "react-toastify";
 
 const Detail_order = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { auth } = useAuth();
+  const addToCartMutation = useAddToCart();
   const { data, isLoading } = useQuery({
     queryKey: ["orders", id],
     queryFn: () => getById({ namespace: "orders", id: id }),
@@ -22,6 +28,20 @@ const Detail_order = () => {
       </div>
     );
   }
+
+  const handleBuyAgain = (item: any) => {
+    if (!auth.user?.id) {
+      toast.error("Bạn cần đăng nhập để mua lại sản phẩm!");
+      return;
+    }
+    addToCartMutation.mutate({
+      productVariantId: item.productVariantId?._id,
+      size: item.size,
+      quantity: 1,
+      userId: auth.user.id,
+    });
+  };
+
   return (
     <ClientLayout>
       <article className="mt-[98px]">
@@ -105,7 +125,10 @@ const Detail_order = () => {
                                 "Không có"}
                             </p>
                           </div>
-                          <button className="w-fit mt-2 px-4 py-1 border border-black rounded-md hover:bg-black hover:text-white transition">
+                          <button
+                            onClick={() => handleBuyAgain(item)}
+                            className="w-fit mt-2 px-4 py-1 border border-black rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px]  hover:bg-black hover:text-white transition" 
+                          >
                             MUA LẠI
                           </button>
                         </div>
@@ -177,7 +200,10 @@ const Detail_order = () => {
             </div>
 
             <div className="mt-8">
-              <button className="bg-black text-white px-6 py-2 rounded-full hover:opacity-90 transition">
+              <button
+                className="bg-black text-white px-6 py-2 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:opacity-90 transition"
+                onClick={() => navigate(`/order-follow/${data._id}`)}
+              >
                 THEO DÕI ĐƠN HÀNG
               </button>
             </div>
