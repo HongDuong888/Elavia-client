@@ -1,11 +1,31 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ClientLayout from "../../layouts/clientLayout";
+import { useAuth } from "../../context/auth.context";
+
+import { toast } from "react-toastify";
+import axiosInstance from "../../services/axiosInstance";
 
 const orderSuccess = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { orderId, orderMongoId, receiverName } = location.state || {};
+  const { auth } = useAuth();
+  const userEmail = auth?.user?.email;
+
+  const handleFollowOrder = async () => {
+    try {
+      const res = await axiosInstance.get("/orders?userEmail=" + userEmail); 
+      const order = res.data.data.find((o: any) => o.orderId === orderId);
+      if (order) {
+        navigate(`/order-follow/${order._id}`);
+      } else {
+        toast.error("Không tìm thấy đơn hàng!");
+      }
+    } catch (err) {
+      toast.error("Lỗi khi tìm đơn hàng!");
+    }
+  };
 
   return (
     <ClientLayout>
@@ -29,7 +49,7 @@ const orderSuccess = () => {
             </button>
             <button
               className="border border-black px-6 py-3 rounded-tl-2xl rounded-br-2xl font-semibold hover:bg-black hover:text-white transition"
-              onClick={() => navigate(`/order-details/${orderMongoId}`)}
+              onClick={handleFollowOrder}
             >
               THEO DÕI ĐƠN HÀNG
             </button>
