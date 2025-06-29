@@ -48,7 +48,7 @@ const MenuInfo = () => {
 C403.3 34.6 333.7 0 256 0C114.6 0 0 114.6 0 256c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 128a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"
                 ></path>
               </svg>
-              <Link to="?action=order-history">Lịch sử đăng nhập</Link>
+              <Link to="/loginHistory">Lịch sử đăng nhập</Link>
             </div>
           </li>
           <li className="px-4 py-2">
