@@ -273,6 +273,12 @@ const MenuClient = () => {
                       Đơn hàng của tôi
                     </Link>
                     <Link
+                      to="/loginHistory"
+                      className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                    >
+                      Lịch sử đăng nhập
+                    </Link>
+                    <Link
                       to="/viewed-products"
                       className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
                     >

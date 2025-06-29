@@ -30,9 +30,10 @@ const Login = () => {
   const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: login,
     onSuccess: (data) => {
-      const { token } = data.user;
+      const { token, id } = data.user;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("user_id", id)
       setAuth({
         isAuthenticated: true,
         isAuthenticating: false,

@@ -203,6 +203,7 @@ const Register = () => {
             },
             address: validatedData.address,
             isDefault: true,
+            type: "home",
           },
         ],
       };
