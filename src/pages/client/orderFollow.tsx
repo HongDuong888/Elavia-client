@@ -81,7 +81,7 @@ const OrderFollow = () => {
       <div className="mt-24 px-2">
         <div className="text-sm text-gray-500 mb-2">
           Trang chủ &nbsp; - &nbsp; Thông tin đơn hàng
-          <span className="float-right text-black font-medium text-red-600">
+          <span className="float-right font-medium text-red-600">
             {data.status}
           </span>
         </div>
@@ -98,14 +98,20 @@ const OrderFollow = () => {
                     <div className="flex flex-col items-center ">
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
-                          ${idx <= currentStep ? "bg-black border-black" : "bg-white border-gray-300"}
+                          ${
+                            idx <= currentStep
+                              ? "bg-black border-black"
+                              : "bg-white border-gray-300"
+                          }
                           transition-all duration-300
                         `}
                       ></div>
                     </div>
                     {idx < ORDER_STEPS.length - 1 && (
                       <div
-                        className={`h-1 flex-1 ${idx < currentStep ? "bg-black" : "bg-gray-200"} transition-all duration-300`}
+                        className={`h-1 flex-1 ${
+                          idx < currentStep ? "bg-black" : "bg-gray-200"
+                        } transition-all duration-300`}
                       ></div>
                     )}
                   </React.Fragment>
@@ -120,8 +126,9 @@ const OrderFollow = () => {
                     style={{ minWidth: "0" }}
                   >
                     <span
-                      className={`text-[11px] font-semibold leading-tight text-center whitespace-normal break-words ${idx <= currentStep ? "text-black" : "text-gray-400"
-                        }`}
+                      className={`text-[11px] font-semibold leading-tight text-center whitespace-normal break-words ${
+                        idx <= currentStep ? "text-black" : "text-gray-400"
+                      }`}
                       style={{ maxWidth: 80 }}
                     >
                       {step}
@@ -137,31 +144,48 @@ const OrderFollow = () => {
                 Chi tiết trạng thái đơn hàng
               </h3>
               <div className="relative ml-4">
-                <div className="absolute left-2 top-2 bottom-2 w-1 bg-gray-200 z-0 rounded-full" style={{ height: `calc(100% - 16px)` }}></div>
+                <div
+                  className="absolute left-2 top-2 bottom-2 w-1 bg-gray-200 z-0 rounded-full"
+                  style={{ height: `calc(100% - 16px)` }}
+                ></div>
                 <ul className="space-y-6 relative z-10">
                   {ORDER_STEPS.map((step, idx) => (
                     <li key={step} className="flex items-start relative z-10">
                       <span
                         className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5
-                          ${idx <= currentStep ? "bg-black border-black" : "bg-white border-gray-400"}
+                          ${
+                            idx <= currentStep
+                              ? "bg-black border-black"
+                              : "bg-white border-gray-400"
+                          }
                         `}
                       ></span>
                       <div className="ml-4">
                         <span
-                          className={`font-semibold text-base ${idx <= currentStep ? "text-black" : "text-gray-400"
-                            }`}
+                          className={`font-semibold text-base ${
+                            idx <= currentStep ? "text-black" : "text-gray-400"
+                          }`}
                         >
                           {step}
                         </span>
                         <div className="text-xs text-gray-500 mt-1">
                           {idx === 0 &&
-                            new Date(data.createdAt).toLocaleDateString("vi-VN") +
-                            " " +
-                            new Date(data.createdAt).toLocaleTimeString("vi-VN")}
-                          {idx === currentStep && idx !== 0 &&
-                            new Date(data.updatedAt).toLocaleDateString("vi-VN") +
-                            " " +
-                            new Date(data.updatedAt).toLocaleTimeString("vi-VN")}
+                            new Date(data.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            ) +
+                              " " +
+                              new Date(data.createdAt).toLocaleTimeString(
+                                "vi-VN"
+                              )}
+                          {idx === currentStep &&
+                            idx !== 0 &&
+                            new Date(data.updatedAt).toLocaleDateString(
+                              "vi-VN"
+                            ) +
+                              " " +
+                              new Date(data.updatedAt).toLocaleTimeString(
+                                "vi-VN"
+                              )}
                         </div>
                       </div>
                     </li>
@@ -185,18 +209,24 @@ const OrderFollow = () => {
                   className="w-[120px] h-[160px] object-cover rounded"
                 />
                 <div>
-                  <div className="font-semibold text-lg">{item.productName}</div>
+                  <div className="font-semibold text-lg">
+                    {item.productName}
+                  </div>
                   <div className="text-sm">
-                    Màu sắc: {item.productVariantId?.color?.colorName || "Không có"}
+                    Màu sắc:{" "}
+                    {item.productVariantId?.color?.colorName || "Không có"}
                   </div>
                   <div className="text-sm">Size: {item.size}</div>
                   <div className="text-sm">Số lượng: {item.quantity}</div>
                   <div className="text-sm">
                     SKU: {item.productVariantId?.sku || "Không có"}
                   </div>
-                  <button className="mt-2 px-4 py-1 border border-black 
+                  <button
+                    className="mt-2 px-4 py-1 border border-black 
   rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] 
-  bg-white text-black hover:bg-black hover:text-white transition text-sm" onClick={() => handleBuyAgain(item)}>
+  bg-white text-black hover:bg-black hover:text-white transition text-sm"
+                    onClick={() => handleBuyAgain(item)}
+                  >
                     MUA LẠI
                   </button>
                 </div>
@@ -206,63 +236,63 @@ const OrderFollow = () => {
 
           {/* RIGHT: Tóm tắt đơn hàng */}
           <div>
-             <div className="w-full lg:w-[320px] bg-[#f7f7f7] p-5 rounded-md text-sm space-y-5 shadow-sm ml-14">
-                <h3 className="text-base font-semibold pb-3 border-b border-gray-300">
-                  Tóm tắt đơn hàng
-                </h3>
+            <div className="w-full lg:w-[320px] bg-[#f7f7f7] p-5 rounded-md text-sm space-y-5 shadow-sm ml-14">
+              <h3 className="text-base font-semibold pb-3 border-b border-gray-300">
+                Tóm tắt đơn hàng
+              </h3>
 
-                <div className="space-y-2 text-gray-700">
-                  <div className="flex justify-between">
-                    <span>Ngày tạo đơn</span>
-                    <span className="font-medium">
-                      {new Date(data.updatedAt).toLocaleDateString("vi-VN", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tạm tính</span>
-                    <span className="font-medium">
-                      {data.totalAmount.toLocaleString("vi-VN")} đ
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Phí vận chuyển</span>
-                    <span className="font-medium">38.000 đ</span>
-                  </div>
-                  <div className="flex justify-between font-semibold pt-3 border-t border-gray-300 mt-2 text-base">
-                    <span>Tổng tiền</span>
-                    <span>
-                      {(data.totalAmount + 38000).toLocaleString("vi-VN")} đ
-                    </span>
-                  </div>
+              <div className="space-y-2 text-gray-700">
+                <div className="flex justify-between">
+                  <span>Ngày tạo đơn</span>
+                  <span className="font-medium">
+                    {new Date(data.updatedAt).toLocaleDateString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                  </span>
                 </div>
-
-                <div>
-                  <h4 className="font-semibold border-t pt-3 mb-1">
-                    Hình thức thanh toán
-                  </h4>
-                  <p className="py-1 text-gray-700">{data.paymentMethod}</p>
+                <div className="flex justify-between">
+                  <span>Tạm tính</span>
+                  <span className="font-medium">
+                    {data.totalAmount.toLocaleString("vi-VN")} đ
+                  </span>
                 </div>
-
-                <div>
-                  <h4 className="font-semibold border-t pt-3 mb-1">
-                    Đơn vị vận chuyển
-                  </h4>
-                  <p className="py-1 text-gray-700">Chuyển phát nhanh</p>
+                <div className="flex justify-between">
+                  <span>Phí vận chuyển</span>
+                  <span className="font-medium">38.000 đ</span>
                 </div>
-
-                <div>
-                  <h4 className="font-semibold border-t pt-3 mb-1">Địa chỉ</h4>
-                  <p className="py-1 text-gray-700">{data.user.name}</p>
-                  <p className="py-1 text-gray-700">{data.user.address}</p>
-                  <p className="py-1 text-gray-700">
-                    Điện thoại: {data.user.phone}
-                  </p>
+                <div className="flex justify-between font-semibold pt-3 border-t border-gray-300 mt-2 text-base">
+                  <span>Tổng tiền</span>
+                  <span>
+                    {(data.totalAmount + 38000).toLocaleString("vi-VN")} đ
+                  </span>
                 </div>
               </div>
+
+              <div>
+                <h4 className="font-semibold border-t pt-3 mb-1">
+                  Hình thức thanh toán
+                </h4>
+                <p className="py-1 text-gray-700">{data.paymentMethod}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold border-t pt-3 mb-1">
+                  Đơn vị vận chuyển
+                </h4>
+                <p className="py-1 text-gray-700">Chuyển phát nhanh</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold border-t pt-3 mb-1">Địa chỉ</h4>
+                <p className="py-1 text-gray-700">{data.user.name}</p>
+                <p className="py-1 text-gray-700">{data.user.address}</p>
+                <p className="py-1 text-gray-700">
+                  Điện thoại: {data.user.phone}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

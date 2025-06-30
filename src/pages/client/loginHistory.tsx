@@ -3,6 +3,7 @@ import ClientLayout from "../../layouts/clientLayout";
 import { Link } from "react-router-dom";
 import MenuInfo from "../../components/menuInfo";
 import axios from "axios";
+import axiosInstance from "../../services/axiosInstance";
 
 interface LoginLog {
   device: string;
@@ -23,10 +24,13 @@ const LoginHistory = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await axios.get(
-          `${
-            import.meta.env.VITE_API_URL
-          }/auth/login-history/${userId}?page=${page}&limit=${limit}`
+        const res = await axiosInstance.get(
+          `${import.meta.env.VITE_API_URL}/auth/login-history`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
         );
         const json = await res.data;
         setLoginHistory(json.data);
