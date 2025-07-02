@@ -5,19 +5,21 @@ import { toast } from "react-toastify";
 import { getById, getList, postItem } from "../../api/provider";
 import { addToCart } from "../../services/userService";
 import { Rate } from "antd";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Loading from "../../components/loading";
 import { CartItem } from "../../types/cart";
 import ClientLayout from "../../layouts/clientLayout";
-import ProductItemForm from "../../components/productItem";
 import { usePostItem } from "../../hooks/usePostItem";
 import { useAddToCart } from "../../hooks/useAddToCart";
 import ProductItemVariantForm from "../../components/productItemVariant";
 import { HiCheck } from "react-icons/hi";
+import ProductItemForm from "../../components/productItem";
+import ProductItemRelated from "../../components/productItemRelated";
 
 const DetailProduct = ({ productId }: { productId: string }) => {
   const queryClient = useQueryClient();
   const { auth } = useAuth();
+  const { id } = useParams();
   const navigate = useNavigate();
   const {
     data: product,
@@ -155,6 +157,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
   if (error)
     return <div>Error loading product: {(error as Error).message}</div>;
   if (!product) return <div>Product not found</div>;
+  console.log("Product:", product._id);
   return (
     <>
       <ClientLayout>
@@ -488,6 +491,14 @@ const DetailProduct = ({ productId }: { productId: string }) => {
               namespace="product-variants/recently-viewed"
               isSlideshow
             />
+            <p className="text-center font-semibold py-4 text-xl sm:text-2xl md:text-3xl md:py-8 sm:py-8">
+            Sản phẩm liên quan
+          </p>
+          {/* Product Items for Collection */}
+          <div className="w-full">
+            <ProductItemRelated
+              variantId={product._id}
+            />
           </div>
           <div>
             <img
@@ -495,6 +506,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
               className="rounded-tl-[80px] rounded-br-[80px] my-7"
               alt="Banner"
             />
+          </div>
           </div>
         </article>
       </ClientLayout>
