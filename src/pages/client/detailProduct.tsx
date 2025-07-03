@@ -13,8 +13,6 @@ import { usePostItem } from "../../hooks/usePostItem";
 import { useAddToCart } from "../../hooks/useAddToCart";
 import ProductItemVariantForm from "../../components/productItemVariant";
 import { HiCheck } from "react-icons/hi";
-import ProductItemForm from "../../components/productItem";
-import ProductItemRelated from "../../components/productItemRelated";
 
 const DetailProduct = ({ productId }: { productId: string }) => {
   const queryClient = useQueryClient();
@@ -153,6 +151,19 @@ const DetailProduct = ({ productId }: { productId: string }) => {
 
     return brightness < 128;
   }
+  const namespaceRelated = product?._id
+    ? `product-variants/${product._id}/related-variants`
+    : "";
+
+  const { data: relatedVariantsData } = useQuery({
+    queryKey: ["relatedVariants", namespaceRelated],
+    queryFn: async () => {
+      const res = await getList({ namespace: namespaceRelated });
+      return res.data;
+    },
+    enabled: !!product?._id,
+  });
+
   if (isLoading) return <Loading />;
   if (error)
     return <div>Error loading product: {(error as Error).message}</div>;
@@ -482,22 +493,27 @@ const DetailProduct = ({ productId }: { productId: string }) => {
               </div>
             </div>
           </div>
+          {relatedVariantsData?.length > 0 && (
+            <>
+              <p className="text-center font-semibold py-4 text-xl sm:text-2xl md:text-3xl md:py-8 sm:py-8">
+                Sản phẩm tương tự
+              </p>
+              <div className="w-full">
+                <ProductItemVariantForm
+                  namespace={namespaceRelated}
+                  isSlideshow
+                />
+              </div>
+            </>
+          )}
+
           <p className="text-center font-semibold py-4 text-xl sm:text-2xl md:text-3xl md:py-8 sm:py-8">
             Sản phẩm đã xem
           </p>
-          {/* Product Items for Collection */}
           <div className="w-full">
             <ProductItemVariantForm
               namespace="product-variants/recently-viewed"
               isSlideshow
-            />
-            <p className="text-center font-semibold py-4 text-xl sm:text-2xl md:text-3xl md:py-8 sm:py-8">
-            Sản phẩm liên quan
-          </p>
-          {/* Product Items for Collection */}
-          <div className="w-full">
-            <ProductItemRelated
-              variantId={product._id}
             />
           </div>
           <div>
@@ -506,7 +522,6 @@ const DetailProduct = ({ productId }: { productId: string }) => {
               className="rounded-tl-[80px] rounded-br-[80px] my-7"
               alt="Banner"
             />
-          </div>
           </div>
         </article>
       </ClientLayout>
