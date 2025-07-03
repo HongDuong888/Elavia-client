@@ -11,6 +11,10 @@ import moment from "moment";
 import { useGHNMapper } from "../../utils/ghnMapping";
 import ClientLayout from "../../layouts/clientLayout";
 import axios from "axios";
+import { useVoucher } from "../../hooks/useVoucher";
+import { log } from "console";
+
+
 
 const Dathang = () => {
   const navigate = useNavigate();
@@ -23,10 +27,7 @@ const Dathang = () => {
   const [voucherTab, setVoucherTab] = useState<"ma-giam-gia" | "ma-cua-toi">(
     "ma-giam-gia"
   );
-
-  // const cityName = userData[0].city.name;
-  // const districtName = userData[0].district.name;
-  // const wardName = userData[0].commune.name;
+  
   const cityName = "Hà Nội";
   const districtName = "Quận Nam Từ Liêm";
   const wardName = "Phường Xuân Phương";
@@ -42,53 +43,29 @@ const Dathang = () => {
     findWardCode,
   } = useGHNMapper("5191a6d2-16d1-11f0-8b10-8e771ee3638b");
 
-  // 1. Khi provinces đã load, tìm provinceId và fetch district
   useEffect(() => {
-    if (provinces.length === 0) return;
-
+    if (provinces.length === 0 || districts.length > 0) return;
     const provinceId = findProvinceId(cityName);
-    if (provinceId) {
-      console.log("✅ Province ID:", provinceId);
-      fetchDistricts(provinceId);
-    } else {
-      console.warn("❌ Không tìm thấy province");
-    }
-  }, [provinces]);
+    if (provinceId) fetchDistricts(provinceId);
+  }, [provinces, districts, findProvinceId, fetchDistricts]);
 
-  // 2. Khi districts đã load, tìm districtId và fetch ward
   useEffect(() => {
-    if (districts.length === 0 || provinces.length === 0) return;
-
-    const provinceId = findProvinceId(cityName);
-    if (!provinceId) return;
-
-    const districtId = findDistrictId(districtName, provinceId);
-    if (districtId) {
-      console.log("✅ District ID:", districtId);
-      fetchWards(districtId);
-    } else {
-      console.warn("❌ Không tìm thấy district");
-    }
-  }, [districts]);
-
-  // 3. Khi wards đã load, tìm wardCode
-  useEffect(() => {
-    if (wards.length === 0 || districts.length === 0) return;
-
+    if (districts.length === 0 || wards.length > 0) return;
     const provinceId = findProvinceId(cityName);
     const districtId = findDistrictId(districtName, provinceId!);
-    if (!districtId) return;
+    if (districtId) fetchWards(districtId);
+  }, [districts, wards, findProvinceId, findDistrictId, fetchWards]);
 
-    const wardCode = findWardCode(wardName, districtId);
-    if (wardCode) {
-      const wardId = wardCode;
-      console.log("✅ Ward Code:", wardCode);
-    } else {
-      console.warn("❌ Không tìm thấy ward");
+  useEffect(() => {
+    if (wards.length === 0) return;
+    const provinceId = findProvinceId(cityName);
+    const districtId = findDistrictId(districtName, provinceId!);
+    if (districtId) {
+      const wardCode = findWardCode(wardName, districtId);
+      if (wardCode) console.log("✅ Ward Code:", wardCode);
+      else console.warn("❌ Không tìm thấy ward");
     }
-  }, [wards]);
-  const TOKEN = "1cde9362-529a-11f0-8c19-5aba781b9b65";
-  const SHOP_ID = "5858948";
+  }, [wards, findProvinceId, findDistrictId, findWardCode]);
 
   const {
     data: cartItems,
@@ -99,6 +76,7 @@ const Dathang = () => {
     queryFn: async () => getList({ namespace: `cart` }),
     staleTime: 60 * 1000,
   });
+
   const {
     data: userData,
     isLoading: userLoading,
@@ -109,28 +87,37 @@ const Dathang = () => {
       getById({ namespace: `auth/shipping-address`, id: auth.user.id }),
     staleTime: 60 * 1000,
   });
+  const {
+    data: myInfoData,
+    isLoading: isMyInfoLoading,
+    error: myInfoError,
+  } = useQuery({
+    queryKey: ["myInfo"],
+    queryFn: async () =>
+      getList({ namespace: "auth/my-info" }),
+    staleTime: 300 * 1000,
+  });
+  console.log("userData:", userData);
+  console.log("myInfoData:", myInfoData);
+  const {
+    shipping_addresses = [],
+    defaultAddress: defaultAddressId,
+  } = myInfoData || {};
+  
+  const defaultAddress = shipping_addresses.find(
+    (addr: any) => addr._id === defaultAddressId
+  );
+  console.log("defaultAddress:", defaultAddress);
+  const isValidAddress =
+  defaultAddress?.address &&
+  defaultAddress?.district?.name &&
+  defaultAddress?.commune?.name &&
+  defaultAddress?.city?.name;
 
-  if (cartLoading || userLoading) return <Loading />;
-  if (cartError)
-    return <div>Lỗi khi tải giỏ hàng: {(cartError as Error).message}</div>;
-  if (userError)
-    return (
-      <div>
-        Lỗi khi tải thông tin người dùng: {(userError as Error).message}
-      </div>
-    );
-  if (!userData || userData.length === 0)
-    return <div>Không tìm thấy thông tin địa chỉ giao hàng</div>;
-
-  const address =
-    userData[0].address +
-    ", " +
-    userData[0].district.name +
-    ", " +
-    userData[0].commune.name +
-    ", " +
-    userData[0].city.name;
-
+const address = isValidAddress
+  ? `${defaultAddress.address}, ${defaultAddress.district.name}, ${defaultAddress.commune.name}, ${defaultAddress.city.name}`
+  : "";
+  const userId = auth?.user?.id || "";
   const items: ICartItem[] = cartItems?.items || [];
   const validItems = items.filter(
     (item) =>
@@ -139,25 +126,31 @@ const Dathang = () => {
       typeof item.productVariantId === "object" &&
       item.productVariantId !== null
   );
+  const totalQuantity = validItems.reduce((sum, item) => (item?.quantity ? sum + item.quantity : sum), 0);
+  const totalPrice = validItems.reduce((sum, item) => (item?.productVariantId?.price && item.quantity ? sum + item.productVariantId.price * item.quantity : sum), 0);
 
-  const totalQuantity = validItems.reduce((sum, item) => {
-    if (!item || typeof item.quantity !== "number") return sum;
-    return sum + item.quantity;
-  }, 0);
+  const {
+    voucher: voucherFromUseVoucher,
+    setVoucher: setVoucherFromUseVoucher,
+    discount,
+    voucherId,
+    handleApplyVoucher,
+  } = useVoucher(userId, totalPrice);
 
-  const totalPrice = validItems.reduce((sum, item) => {
-    if (
-      !item?.productVariantId?.price ||
-      typeof item.productVariantId.price !== "number" ||
-      !item.quantity
-    )
-      return sum;
-    return sum + item.productVariantId.price * item.quantity;
-  }, 0);
+  if (cartLoading || userLoading) return <Loading />;
+  if (cartError) return <div>Lỗi khi tải giỏ hàng: {(cartError as Error).message}</div>;
+  if (userError) return <div>Lỗi khi tải thông tin người dùng: {(userError as Error).message}</div>;
+  if (!userData || userData.length === 0) return <div>Không tìm thấy thông tin địa chỉ giao hàng</div>;
+
+  
 
   const handlePayment = async () => {
     if (!auth.user.id) {
       toast.error("Bạn cần đăng nhập để thực hiện thanh toán");
+      return;
+    }
+    if (!isValidAddress || !defaultAddress) {
+      toast.error("Vui lòng cung cấp địa chỉ giao hàng hợp lệ");
       return;
     }
 
@@ -166,9 +159,9 @@ const Dathang = () => {
         const payload = {
           orderId: "COD_" + new Date().getTime(),
           user: {
-            name: userData[0].receiver_name,
+            name: defaultAddress.receiver_name,
             email: auth.user.email,
-            phone: userData[0].phone,
+            phone: defaultAddress.phone,
             address: address,
           },
           items: validItems.map((item) => ({
@@ -179,7 +172,7 @@ const Dathang = () => {
             quantity: item.quantity,
             size: item.size,
           })),
-          totalAmount: totalPrice,
+          totalAmount: totalPrice- discount,
           paymentMethod: "COD",
         };
 
@@ -193,7 +186,7 @@ const Dathang = () => {
           navigate("/ordersuccess", {
             state: {
               orderId: payload.orderId,
-              receiverName: userData[0].receiver_name,
+              receiverName: defaultAddress.receiver_name,
             },
           });
         } catch (error: any) {
@@ -212,9 +205,9 @@ const Dathang = () => {
         const payload = {
           orderId: "MoMo_" + new Date().getTime(),
           user: {
-            name: userData[0].receiver_name,
+            name: defaultAddress.receiver_name,
             email: auth.user.email,
-            phone: userData[0].phone,
+            phone: defaultAddress.phone,
             address: address,
           },
           items: validItems.map((item) => ({
@@ -225,7 +218,7 @@ const Dathang = () => {
             quantity: item.quantity,
             size: item.size,
           })),
-          totalAmount: totalPrice,
+          totalAmount: totalPrice- discount,
           paymentMethod: "MoMo",
           orderInfo: "Thanh toán qua MoMo",
           extraData: "",
@@ -235,7 +228,7 @@ const Dathang = () => {
 
         try {
           const momoPayload = {
-            totalAmount: Math.round(totalPrice),
+            totalAmount: Math.round(totalPrice - discount),
             orderId: payload.orderId,
             orderInfo: payload.orderInfo,
             extraData: payload.extraData,
@@ -278,9 +271,9 @@ const Dathang = () => {
         const payload = {
           orderId: orderId,
           user: {
-            name: userData[0].receiver_name,
+            name: defaultAddress.receiver_name,
             email: auth.user.email,
-            phone: userData[0].phone,
+            phone: defaultAddress.phone,
             address: address,
           },
           items: validItems.map((item) => ({
@@ -291,7 +284,7 @@ const Dathang = () => {
             quantity: item.quantity,
             size: item.size,
           })),
-          totalAmount: totalPrice,
+          totalAmount: totalPrice - discount,
           paymentMethod: "zalopay",
           orderInfo: "Thanh toán qua ZaloPay",
           extraData: "",
@@ -301,7 +294,7 @@ const Dathang = () => {
         const zaloPayload = {
           orderId: payload.orderId,
           orderInfo: payload.orderInfo,
-          totalAmount: totalPrice,
+          totalAmount: totalPrice - discount,
         };
         console.log("ZaloPay Payment Request:", zaloPayload);
 
@@ -384,7 +377,7 @@ const Dathang = () => {
                   <div className="border p-6 rounded-tl-[28px] rounded-br-[28px]">
                     <div className="flex justify-between">
                       <div className="text-base font-semibold">
-                        {userData[0].receiver_name}
+                        {defaultAddress?.receiver_name}
                       </div>
                       <div className="flex gap-4">
                         <Link
@@ -395,8 +388,7 @@ const Dathang = () => {
                         </Link>
                         <div>
                           <a
-                            className="py-[10px] px-[16px] border border-black text-white bg-black rounded-tl-[20px] rounded-br-[20px] mt-8 hover:text-black hover:bg-white"
-                            href=""
+                            className="py-[10px] px-[16px] border border-black text-white bg-black rounded-tl-[20px] rounded-br-[20px] mt-8"
                           >
                             Mặc định
                           </a>
@@ -404,7 +396,7 @@ const Dathang = () => {
                       </div>
                     </div>
                     <div className="py-2 text-[14px]">
-                      Điện thoại: {userData[0].phone}
+                      Điện thoại: {defaultAddress?.phone}
                     </div>
                     <div className="py-2 text-[14px]">Địa chỉ: {address}</div>
                   </div>
@@ -610,9 +602,15 @@ const Dathang = () => {
                     <div>Tổng tiền hàng</div>
                     <div>{totalPrice.toLocaleString("vi-VN")}đ</div>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between mt-2 text-green-600">
+                      <div>Giảm giá</div>
+                      <div>-{discount.toLocaleString("vi-VN")}đ</div>
+                    </div>
+                  )}
                   <div className="flex justify-between mt-2">
                     <div>Tạm tính</div>
-                    <div>{totalPrice.toLocaleString("vi-VN")}đ</div>
+                    <div>{(totalPrice - discount).toLocaleString("vi-VN")}đ</div>
                   </div>
                   <div className="flex justify-between mt-2">
                     <div>Phí vận chuyển</div>
@@ -620,7 +618,7 @@ const Dathang = () => {
                   </div>
                   <div className="flex justify-between mt-2 font-semibold">
                     <div>Tiền thanh toán</div>
-                    <div>{totalPrice.toLocaleString("vi-VN")}đ</div>
+                    <div>{(totalPrice - discount).toLocaleString("vi-VN")}đ</div>
                   </div>
                 </div>
                 <hr className="my-4" />
@@ -654,13 +652,13 @@ const Dathang = () => {
                       <input
                         type="text"
                         placeholder="Mã giảm giá"
-                        value={voucher}
-                        onChange={(e) => setVoucher(e.target.value)}
+                        value={voucherFromUseVoucher}
+                        onChange={(e) => setVoucherFromUseVoucher(e.target.value)}
                         className="flex-1 border px-3 py-2 rounded"
                       />
                       <button
                         className="border px-4 py-2 rounded bg-white font-semibold"
-                        // onClick={handleApplyVoucher}
+                        onClick={() => handleApplyVoucher(userId, totalPrice)}
                         type="button"
                       >
                         ÁP DỤNG
@@ -703,3 +701,4 @@ const Dathang = () => {
 };
 
 export default Dathang;
+
