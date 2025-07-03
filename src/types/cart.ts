@@ -41,6 +41,9 @@ export interface ICartItem {
       size: string;
       stock: number;
     }>;
+    color?: { 
+      colorName?: string;
+    };
   };
   quantity: number;
   size: string;

@@ -138,31 +138,7 @@ const Cart = () => {
         <article className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-6 lg:gap-10">
           <div>
             {/* Stepper - Responsive */}
-            <div className="border w-full h-auto py-6 md:h-24 flex flex-wrap md:flex-nowrap justify-center rounded-tl-[20px] rounded-br-[20px] mb-6">
-              <div className="w-[14px] h-[14px] border-2 border-[#e7e8e9] rounded-full bg-black mt-0 md:mt-6 z-10 relative">
-                <p className="text-xs md:text-[12px] mt-4 left-[-20px] w-16 absolute">
-                  Giỏ hàng
-                </p>
-              </div>
-              <div className="h-[3px] w-16 md:w-[200px] bg-[#e7e8e9] mx-1 md:mx-2 mt-[7px] md:mt-[30px]"></div>
-              <div className="w-[14px] h-[14px] rounded-full bg-white border-2 border-[#e7e8e9] mt-0 md:mt-6 z-10 relative">
-                <div className="text-xs md:text-[12px] mt-4 left-[-20px] w-16 absolute">
-                  Đặt hàng
-                </div>
-              </div>
-              <div className="h-[3px] w-16 md:w-[200px] bg-[#e7e8e9] mx-1 md:mx-2 mt-[7px] md:mt-[30px]"></div>
-              <div className="w-[14px] h-[14px] rounded-full bg-white border-2 border-[#e7e8e9] mt-0 md:mt-6 z-10 relative">
-                <div className="text-xs md:text-[12px] mt-4 left-[-20px] w-20 absolute">
-                  Thanh toán
-                </div>
-              </div>
-              <div className="h-[3px] w-16 md:w-[200px] bg-[#e7e8e9] mx-1 md:mx-2 mt-[7px] md:mt-[30px]"></div>
-              <div className="w-[14px] h-[14px] rounded-full bg-white border-2 border-[#e7e8e9] mt-0 md:mt-6 z-10 relative">
-                <div className="text-xs md:text-[12px] mt-4 left-[-40px] w-28 absolute">
-                  Hoàn thành
-                </div>
-              </div>
-            </div>
+         
 
             {/* Cart title */}
             <div className="flex flex-wrap gap-2 mb-4 pt-2 md:pt-6">
@@ -237,6 +213,10 @@ const Cart = () => {
                               {item?.productVariantId?.productId?.name ||
                                 "Unnamed Product"}
                             </Link>
+                            <div className="text-base text-gray-600 mt-1">
+                              <span>Màu:</span>{" "}
+                              {item.productVariantId?.color?.colorName || "Không có"}
+                            </div>
 
                             <div className="grid grid-cols-2 gap-2 mt-2">
                               <div className="text-sm text-gray-600">
@@ -399,8 +379,8 @@ const Cart = () => {
                                 />
                                 <img
                                   src={
-                                    item?.productVariantId?.images?.hover
-                                      ?.url || "/fallback.jpg"
+                                    item?.productVariantId?.images?.hover?.url ||
+                                    "/fallback.jpg"
                                   }
                                   alt={
                                     item?.productVariantId?.productId?.name ||
@@ -412,15 +392,21 @@ const Cart = () => {
                                   }
                                 />
                               </Link>
-                              <Link
-                                to={`/products/${encodeURIComponent(
-                                  item?.productVariantId?._id || ""
-                                )}`}
-                                className="hover:text-orange-600 transition-all duration-300"
-                              >
-                                {item?.productVariantId?.productId?.name ||
-                                  "Unnamed Product"}
-                              </Link>
+                              <div>
+                                <Link
+                                  to={`/products/${encodeURIComponent(
+                                    item?.productVariantId?._id || ""
+                                  )}`}
+                                  className="text-base hover:text-orange-600 transition-all duration-300"
+                                >
+                                  {item?.productVariantId?.productId?.name ||
+                                    "Unnamed Product"}
+                                </Link>
+                                <div className="text-base text-gray-600 mt-1">
+                                  <span>Màu sắc:</span>{" "}
+                                  {item.productVariantId?.color?.colorName || "Không có"}
+                                </div>
+                              </div>
                             </div>
                           </td>
                           <td className="pr-4 py-2 text-sm text-gray-700">
@@ -563,8 +549,7 @@ const Cart = () => {
                 </div>
               </div>
               <div className="text-xs md:text-[14px] text-[#AC2F33] my-6">
-                Sản phẩm nằm trong chương trình đồng giá, giảm giá trên 50%
-                không hỗ trợ đổi trả
+                Sản phẩm nằm trong chương trình đồng giá, giảm giá trên 50% không hỗ trợ đổi trả
               </div>
               <hr />
             </div>
