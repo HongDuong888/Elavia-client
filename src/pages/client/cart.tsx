@@ -403,7 +403,7 @@ const Cart = () => {
                                     "Unnamed Product"}
                                 </Link>
                                 <div className="text-base text-gray-600 mt-1">
-                                  <span>Màu:</span>{" "}
+                                  <span>Màu sắc:</span>{" "}
                                   {item.productVariantId?.color?.colorName || "Không có"}
                                 </div>
                               </div>

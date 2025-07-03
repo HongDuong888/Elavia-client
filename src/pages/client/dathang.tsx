@@ -519,18 +519,20 @@ const Dathang = () => {
                                       }
                                     />
                                   </Link>
-                                  <Link
-                                    to={`/products/${encodeURIComponent(
-                                      item?.productVariantId?._id || ""
-                                    )}`}
-                                    className="hover:text-orange-600 transition-all duration-300"
-                                  >
-                                    {item?.productVariantId?.productId?.name ||
-                                      "Unnamed Product"}
-                                  </Link>
-                                  {/* Màu sắc dưới tên sản phẩm */}
-                                  <div className="text-base text-gray-600 mt-1">
-                                    Màu: {item.productVariantId?.color?.colorName || "Không có"}
+                                  <div>
+                                    <Link
+                                      to={`/products/${encodeURIComponent(
+                                        item?.productVariantId?._id || ""
+                                      )}`}
+                                      className="hover:text-orange-600 transition-all duration-300 font-medium"
+                                    >
+                                      {item?.productVariantId?.productId?.name ||
+                                        "Unnamed Product"}
+                                    </Link>
+                                    {/* Màu sắc ngay dưới tên sản phẩm */}
+                                    <div className="text-base text-gray-600 mt-1">
+                                      Màu sắc: {item.productVariantId?.color?.colorName || "Không có"}
+                                    </div>
                                   </div>
                                 </div>
                               </td>
