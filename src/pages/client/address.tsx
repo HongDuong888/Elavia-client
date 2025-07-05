@@ -21,7 +21,7 @@ const AddressSchema = z.object({
     ),
   city: z.string().min(1, "Cần chọn thành phố"),
   district: z.string().min(1, "Cần chọn quận/huyện"),
-  commune: z.string().min(1, "Cần chọn phường/xã"),
+  ward: z.string().min(1, "Cần chọn phường/xã"),
   address: z.string().min(2, "Địa chỉ tối thiểu 2 ký tự"),
   type: z.enum(["home", "company"]),
 });
@@ -44,7 +44,7 @@ const Address = () => {
     phone: "",
     city: "",
     district: "",
-    commune: "",
+    ward: "",
     address: "",
     type: "home",
   });
@@ -93,7 +93,7 @@ const Address = () => {
         phone: "",
         city: "",
         district: "",
-        commune: "",
+        ward: "",
         address: "",
         type: "home",
       });
@@ -130,7 +130,7 @@ const Address = () => {
       ...prev,
       city: selected?.Name || "",
       district: "",
-      commune: "",
+      ward: "",
     }));
   };
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -146,7 +146,7 @@ const Address = () => {
     setFormData((prev) => ({
       ...prev,
       district: selectedDistrictData?.Name || "",
-      commune: "",
+      ward: "",
     }));
   };
   const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -155,13 +155,13 @@ const Address = () => {
     const selectedWardData = wards.find((ward) => ward.Id === wardId);
     setFormData((prev) => ({
       ...prev,
-      commune: selectedWardData?.Name || "",
+      ward: selectedWardData?.Name || "",
     }));
   };
 
   const cityObj = cities.find((city) => city.Id === selectedCity);
   const districtObj = districts.find((d) => d.Id === selectedDistrict);
-  const communeObj = wards.find((c) => c.Id === selectedWard);
+  const wardObj = wards.find((c) => c.Id === selectedWard);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,9 +183,9 @@ const Address = () => {
           id: selectedDistrict,
           name: districtObj?.Name || "",
         },
-        commune: {
+        ward: {
           id: selectedWard,
-          name: communeObj?.Name || "",
+          name: wardObj?.Name || "",
         },
         address: validatedData.address,
         type: validatedData.type,
@@ -350,7 +350,7 @@ const Address = () => {
                         Điện thoại: {address.phone}
                       </div>
                       <div className="px-6 mb-4">
-                        Địa chỉ: {address.address}, {address.commune?.name},
+                        Địa chỉ: {address.address}, {address.ward?.name},
                         {address.district?.name}, {address.city?.name}
                       </div>
                     </div>

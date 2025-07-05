@@ -15,7 +15,7 @@ const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
     phone: "",
     city: "",
     district: "",
-    commune: "",
+    ward: "",
     address: "",
     type: "home",
   });
@@ -65,7 +65,7 @@ const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
       ...form,
       city: { id: selectedCity, name: form.city },
       district: { id: selectedDistrict, name: form.district },
-      commune: { id: selectedWard, name: form.commune },
+      ward: { id: selectedWard, name: form.ward },
     };
 
     try {
@@ -180,13 +180,13 @@ const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
             </select>
 
             <select
-              name="commune"
+              name="ward"
               value={selectedWard}
               onChange={(e) => {
                 setSelectedWard(e.target.value);
                 const name =
                   wards.find((w) => w.Id === e.target.value)?.Name || "";
-                setForm((f) => ({ ...f, commune: name }));
+                setForm((f) => ({ ...f, ward: name }));
               }}
               className="border p-2 rounded"
               required

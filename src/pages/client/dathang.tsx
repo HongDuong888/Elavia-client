@@ -32,7 +32,7 @@ const Dathang = () => {
     address?: string;
     city?: any;
     district?: any;
-    commune?: any;
+    ward?: any;
     type?: string;
   }
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
@@ -98,7 +98,7 @@ const Dathang = () => {
     ? [
         currentAddress.address,
         currentAddress.district?.name,
-        currentAddress.commune?.name,
+        currentAddress.ward?.name,
         currentAddress.city?.name,
       ]
         .filter(Boolean)
@@ -128,6 +128,7 @@ const Dathang = () => {
       return sum;
     return sum + item.productVariantId.price * item.quantity;
   }, 0);
+  console.log("✅ totalPrice:", totalPrice);
 
   const cleanLocationName = (name: string = "") =>
     name.replace(/^(Tỉnh|Thành phố)\s+/g, "").trim();
@@ -136,18 +137,43 @@ const Dathang = () => {
       if (
         currentAddress?.city?.name &&
         currentAddress?.district?.name &&
-        currentAddress?.commune?.name
+        currentAddress?.ward?.name &&
+        items.length > 0
       ) {
         const cleanedCity = cleanLocationName(currentAddress.city.name);
         const cleanedDistrict = cleanLocationName(currentAddress.district.name);
-        const cleanedWard = cleanLocationName(currentAddress.commune.name);
+        const cleanedWard = cleanLocationName(currentAddress.ward.name);
+
+        const validItems = items.filter(
+          (item) =>
+            item &&
+            item.productVariantId &&
+            typeof item.productVariantId === "object" &&
+            item.productVariantId !== null
+        );
+
+        const totalPrice = validItems.reduce((sum, item) => {
+          if (
+            !item?.productVariantId?.price ||
+            typeof item.productVariantId.price !== "number" ||
+            !item.quantity
+          )
+            return sum;
+          return sum + item.productVariantId.price * item.quantity;
+        }, 0);
+
+        const totalWeight = validItems.reduce((sum, item) => {
+          return sum + (item.quantity || 0) * 250;
+        }, 0);
 
         try {
-          setIsFetchingShippingFee(true); // Bắt đầu gọi API
+          setIsFetchingShippingFee(true);
           const res = await axiosInstance.post("/cart/fee", {
             cityName: cleanedCity,
             districtName: cleanedDistrict,
             wardName: cleanedWard,
+            insurance_value: totalPrice,
+            total_weight: totalWeight,
           });
           setShippingFee(res.data.shippingFee);
         } catch (error) {
@@ -160,7 +186,7 @@ const Dathang = () => {
     };
 
     fetchShippingFee();
-  }, [currentAddress]);
+  }, [currentAddress, items]); // 👈 chỉ theo dõi `items`, không theo dõi các biến dẫn đến loop
 
   const handlePayment = async () => {
     if (!auth.user.id) {
@@ -173,7 +199,7 @@ const Dathang = () => {
       ", " +
       currentAddress.district.name +
       ", " +
-      currentAddress.commune.name +
+      currentAddress.ward.name +
       ", " +
       currentAddress.city.name;
 
@@ -196,7 +222,7 @@ const Dathang = () => {
             name: currentAddress.receiver_name,
             cityName: currentAddress.city?.name || "",
             districtName: currentAddress.district?.name || "",
-            communeName: currentAddress.commune?.name || "",
+            wardName: currentAddress.ward?.name || "",
             phone: currentAddress.phone,
             address: currentAddress.address || "",
             type: currentAddress.type || "home",
@@ -240,7 +266,7 @@ const Dathang = () => {
             name: currentAddress.receiver_name,
             cityName: currentAddress.city?.name || "",
             districtName: currentAddress.district?.name || "",
-            communeName: currentAddress.commune?.name || "",
+            wardName: currentAddress.ward?.name || "",
             phone: currentAddress.phone,
             address: currentAddress.address || "",
             type: currentAddress.type || "home",
@@ -271,7 +297,7 @@ const Dathang = () => {
               name: payload.receiver.name,
               cityName: payload.receiver.cityName,
               districtName: payload.receiver.districtName,
-              communeName: payload.receiver.communeName,
+              wardName: payload.receiver.wardName,
               phone: payload.receiver.phone,
               address: payload.receiver.address,
               type: payload.receiver.type,
@@ -322,7 +348,7 @@ const Dathang = () => {
             name: currentAddress.receiver_name,
             cityName: currentAddress.city?.name || "",
             districtName: currentAddress.district?.name || "",
-            communeName: currentAddress.commune?.name || "",
+            wardName: currentAddress.ward?.name || "",
             phone: currentAddress.phone,
             address: currentAddress.address || "",
             type: currentAddress.type || "home",
@@ -349,7 +375,7 @@ const Dathang = () => {
             name: payload.receiver.name,
             cityName: payload.receiver.cityName,
             districtName: payload.receiver.districtName,
-            communeName: payload.receiver.communeName,
+            wardName: payload.receiver.wardName,
             phone: payload.receiver.phone,
             address: payload.receiver.address,
             type: payload.receiver.type,

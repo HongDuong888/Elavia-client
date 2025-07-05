@@ -29,7 +29,7 @@ const registerSchema = z
     sex: z.string().regex(/^[01]$/, "Giới tính phải là 0 hoặc 1"),
     city: z.string().min(1, "Cần chọn thành phố"),
     district: z.string().min(1, "Cần chọn quận/huyện"),
-    commune: z.string().min(1, "Cần chọn phường/xã"),
+    ward: z.string().min(1, "Cần chọn phường/xã"),
     address: z.string().min(2, "Địa chỉ tối thiểu 2 ký tự"),
     password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
     confirmPassword: z.string(),
@@ -61,7 +61,7 @@ const Register = () => {
     sex: "1",
     city: "",
     district: "",
-    commune: "",
+    ward: "",
     address: "",
     password: "",
     confirmPassword: "",
@@ -98,7 +98,7 @@ const Register = () => {
   // Mutation để gửi dữ liệu đăng ký
   const mutation = useMutation<RegisterForm, AxiosError<ErrorResponse>, any>({
     mutationFn: register,
-    onSuccess: (_,variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success("Đăng ký thành công");
       navigate("/verify-account", { state: { email: variables.email } });
@@ -134,7 +134,7 @@ const Register = () => {
       ...prev,
       city: selected?.Name || "",
       district: "",
-      commune: "",
+      ward: "",
     }));
   };
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -150,7 +150,7 @@ const Register = () => {
     setFormData((prev) => ({
       ...prev,
       district: selectedDistrictData?.Name || "",
-      commune: "",
+      ward: "",
     }));
   };
   const handleWardChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -159,16 +159,13 @@ const Register = () => {
     const selectedWardData = wards.find((ward) => ward.Id === wardId);
     setFormData((prev) => ({
       ...prev,
-      commune: selectedWardData?.Name || "",
+      ward: selectedWardData?.Name || "",
     }));
   };
 
-
-
   const cityObj = cities.find((city) => city.Id === selectedCity);
   const districtObj = districts.find((d) => d.Id === selectedDistrict);
-  const communeObj = wards.find((c) => c.Id === selectedWard);
-
+  const wardObj = wards.find((c) => c.Id === selectedWard);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,9 +194,9 @@ const Register = () => {
               id: districtObj?.Id || "",
               name: districtObj?.Name || "",
             },
-            commune: {
-              id: communeObj?.Id || "",
-              name: communeObj?.Name || "",
+            ward: {
+              id: wardObj?.Id || "",
+              name: wardObj?.Name || "",
             },
             address: validatedData.address,
             isDefault: true,
@@ -215,7 +212,7 @@ const Register = () => {
     }
   };
   console.log(formData);
-  
+
   return (
     <>
       <HeaderClient />
@@ -418,9 +415,9 @@ const Register = () => {
                     </option>
                   ))}
                 </select>
-                {errors?.fieldErrors?.commune && (
+                {errors?.fieldErrors?.ward && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.fieldErrors.commune[0]}
+                    {errors.fieldErrors.ward[0]}
                   </p>
                 )}
               </div>
@@ -503,7 +500,6 @@ const Register = () => {
                   type="submit"
                   // mutation.isPending là trạng thái đang gửi, có thể thay thế bằng isLoading nếu có
                   className="w-full py-3 px-4 bg-black text-white font-semibold text-lg rounded-br-2xl rounded-tl-2xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  
                 >
                   Đăng ký
                 </button>

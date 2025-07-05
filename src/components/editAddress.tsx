@@ -21,7 +21,7 @@ const EditAddressModal = ({
     phone: address.phone || "",
     city: address.city?.name || "",
     district: address.district?.name || "",
-    commune: address.commune?.name || "",
+    ward: address.ward?.name || "",
     address: address.address || "",
     type: address.type || "",
   });
@@ -36,7 +36,7 @@ const EditAddressModal = ({
   const [selectedDistrict, setSelectedDistrict] = useState(
     address.district?.id || ""
   );
-  const [selectedWard, setSelectedWard] = useState(address.commune?.id || "");
+  const [selectedWard, setSelectedWard] = useState(address.ward?.id || "");
 
   useEffect(() => {
     axios
@@ -76,7 +76,7 @@ const EditAddressModal = ({
       ...form,
       city: { id: selectedCity, name: form.city },
       district: { id: selectedDistrict, name: form.district },
-      commune: { id: selectedWard, name: form.commune },
+      ward: { id: selectedWard, name: form.ward },
     };
 
     try {
@@ -183,13 +183,13 @@ const EditAddressModal = ({
             </select>
 
             <select
-              name="commune"
+              name="ward"
               value={selectedWard}
               onChange={(e) => {
                 setSelectedWard(e.target.value);
                 const name =
                   wards.find((w) => w.Id === e.target.value)?.Name || "";
-                setForm((f) => ({ ...f, commune: name }));
+                setForm((f) => ({ ...f, ward: name }));
               }}
               className="border p-2 rounded"
             >

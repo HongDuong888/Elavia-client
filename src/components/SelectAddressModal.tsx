@@ -6,7 +6,7 @@ type AddressForm = {
   receiver_name: string;
   phone: string;
   address: string;
-  commune?: { name: string };
+  ward?: { name: string };
   district?: { name: string };
   city?: { name: string };
   type?: "home" | "work";
@@ -61,7 +61,7 @@ const SelectAddressModal = ({
                 </div>
                 <div className="text-sm">Điện thoại: {address.phone}</div>
                 <div className="text-sm">
-                  Địa chỉ: {address.address}, {address.commune?.name},{" "}
+                  Địa chỉ: {address.address}, {address.ward?.name},{" "}
                   {address.district?.name}, {address.city?.name}
                 </div>
               </div>
