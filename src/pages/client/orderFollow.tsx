@@ -52,7 +52,7 @@ const OrderFollow = () => {
     queryFn: () => getById({ namespace: "orders", id }),
     refetchInterval: 5000,
   });
-
+  
   if (isLoading) return <Loading />;
   if (!data)
     return (
@@ -255,17 +255,21 @@ const OrderFollow = () => {
                 <div className="flex justify-between">
                   <span>Tạm tính</span>
                   <span className="font-medium">
-                    {data.totalAmount.toLocaleString("vi-VN")} đ
+                    {data.totalPrice.toLocaleString("vi-VN")} đ
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Phí vận chuyển</span>
-                  <span className="font-medium">38.000 đ</span>
+                  <span className="font-medium">{data.shippingFee.toLocaleString("vi-VN")} đ</span>
                 </div>
+                <div className="flex justify-between">
+                    <span>Giảm giá</span>
+                    <span className="font-medium">{data.discountAmount.toLocaleString("vi-VN")} đ</span>
+                  </div>
                 <div className="flex justify-between font-semibold pt-3 border-t border-gray-300 mt-2 text-base">
                   <span>Tổng tiền</span>
                   <span>
-                    {(data.totalAmount + 38000).toLocaleString("vi-VN")} đ
+                    {data.finalAmount.toLocaleString("vi-VN")} đ
                   </span>
                 </div>
               </div>
@@ -286,10 +290,10 @@ const OrderFollow = () => {
 
               <div>
                 <h4 className="font-semibold border-t pt-3 mb-1">Địa chỉ</h4>
-                <p className="py-1 text-gray-700">{data.user.name}</p>
-                <p className="py-1 text-gray-700">{data.user.address}</p>
+                <p className="py-1 text-gray-700">{data.receiver.name}</p>
+                <p className="py-1 text-gray-700">{data.receiver.address}, {data.receiver.wardName}, {data.receiver.districtName}, {data.receiver.cityName} </p>
                 <p className="py-1 text-gray-700">
-                  Điện thoại: {data.user.phone}
+                  Điện thoại: {data.receiver.phone}
                 </p>
               </div>
             </div>
