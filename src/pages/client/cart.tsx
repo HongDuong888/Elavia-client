@@ -138,7 +138,6 @@ const Cart = () => {
         <article className="grid grid-cols-1 lg:grid-cols-[4fr_1.5fr] gap-6 lg:gap-10">
           <div>
             {/* Stepper - Responsive */}
-         
 
             {/* Cart title */}
             <div className="flex flex-wrap gap-2 mb-4 pt-2 md:pt-6">
@@ -208,14 +207,15 @@ const Cart = () => {
                               to={`/products/${encodeURIComponent(
                                 item?.productVariantId?._id || ""
                               )}`}
-                              className="font-medium hover:text-orange-600 transition-all duration-300"
+                              className="text-base hover:text-orange-600 transition-all duration-300"
                             >
                               {item?.productVariantId?.productId?.name ||
                                 "Unnamed Product"}
                             </Link>
-                            <div className="text-base text-gray-600 mt-1">
-                              <span>Màu:</span>{" "}
-                              {item.productVariantId?.color?.colorName || "Không có"}
+                            <div className="text-base text-gray-600 mt-1 text-[12px]">
+                              <span>Màu sắc: </span>
+                              {item.productVariantId?.color?.colorName ||
+                                "Không có"}
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 mt-2">
@@ -379,8 +379,8 @@ const Cart = () => {
                                 />
                                 <img
                                   src={
-                                    item?.productVariantId?.images?.hover?.url ||
-                                    "/fallback.jpg"
+                                    item?.productVariantId?.images?.hover
+                                      ?.url || "/fallback.jpg"
                                   }
                                   alt={
                                     item?.productVariantId?.productId?.name ||
@@ -397,14 +397,15 @@ const Cart = () => {
                                   to={`/products/${encodeURIComponent(
                                     item?.productVariantId?._id || ""
                                   )}`}
-                                  className="text-base hover:text-orange-600 transition-all duration-300"
+                                  className="text-black text-[16px] hover:text-orange-600 transition-all duration-300"
                                 >
                                   {item?.productVariantId?.productId?.name ||
                                     "Unnamed Product"}
                                 </Link>
-                                <div className="text-base text-gray-600 mt-1">
-                                  <span>Màu sắc:</span>{" "}
-                                  {item.productVariantId?.color?.colorName || "Không có"}
+                                <div className="text-gray-600 mt-1 text-[14px]">
+                                  <span>Màu sắc: </span>
+                                  {item.productVariantId?.color?.colorName ||
+                                    "Không có"}
                                 </div>
                               </div>
                             </div>
@@ -549,7 +550,8 @@ const Cart = () => {
                 </div>
               </div>
               <div className="text-xs md:text-[14px] text-[#AC2F33] my-6">
-                Sản phẩm nằm trong chương trình đồng giá, giảm giá trên 50% không hỗ trợ đổi trả
+                Sản phẩm nằm trong chương trình đồng giá, giảm giá trên 50%
+                không hỗ trợ đổi trả
               </div>
               <hr />
             </div>

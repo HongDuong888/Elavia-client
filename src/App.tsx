@@ -46,7 +46,10 @@ function App() {
       path: "/order-details/:id",
       element: <CheckLogin element={<Detail_order />} />,
     },
-    { path: "/loginHistory", element: <CheckLogin element={<LoginHistory />} /> },
+    {
+      path: "/loginHistory",
+      element: <CheckLogin element={<LoginHistory />} />,
+    },
     { path: "/user-details", element: <CheckLogin element={<DetailUser />} /> },
     { path: "/cart", element: <CheckLogin element={<Cart />} /> },
     { path: "/dathang", element: <CheckLogin element={<Dathang />} /> },
