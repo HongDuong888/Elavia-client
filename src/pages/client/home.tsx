@@ -1,5 +1,4 @@
 import { Slideshow, SlideshowTwo } from "../../components/clientSlideShow";
-import ProductItemForm from "../../components/productItem";
 import ProductItemVariantForm from "../../components/productItemVariant";
 import ClientLayout from "../../layouts/clientLayout";
 
