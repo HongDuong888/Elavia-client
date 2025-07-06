@@ -89,7 +89,7 @@ const Dathang = () => {
     if (userData && userData.length > 0) {
       setSelectedAddress(userData[0]);
     }
-  }, [userData]); // Thêm dòng này
+  }, [userData]);
 
   const currentAddress =
     selectedAddress || (userData && userData.length > 0 ? userData[0] : null);
@@ -163,9 +163,11 @@ const Dathang = () => {
         }, 0);
 
         const totalWeight = validItems.reduce((sum, item) => {
-          return sum + (item.quantity || 0) * 250;
+          return sum + (item.quantity || 0) * 300;
         }, 0);
-
+        const totalHeight = validItems.reduce((sum, item) => {
+          return sum + (item.quantity || 0) * 4;
+        }, 0);
         try {
           setIsFetchingShippingFee(true);
           const res = await axiosInstance.post("/cart/fee", {
@@ -174,6 +176,9 @@ const Dathang = () => {
             wardName: cleanedWard,
             insurance_value: totalPrice,
             total_weight: totalWeight,
+            total_height: totalHeight,
+            total_length: 25, // cố định
+            total_width: 20, // cố định
           });
           setShippingFee(res.data.shippingFee);
         } catch (error) {

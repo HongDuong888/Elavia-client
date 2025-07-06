@@ -168,7 +168,6 @@ const DetailProduct = ({ productId }: { productId: string }) => {
   if (error)
     return <div>Error loading product: {(error as Error).message}</div>;
   if (!product) return <div>Product not found</div>;
-  console.log("Product:", product._id);
   return (
     <>
       <ClientLayout>
@@ -247,33 +246,41 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                 {product.price.toLocaleString("vi-VN")}đ
               </div>
 
-              <div className="text-xl font-[550] my-4">
+              <div className="text-xl font-[550] my-3">
                 Màu sắc: {product.color.colorName}
               </div>
-              <div className="flex gap-2">
-                {colors.map((color: any) => {
-                  const isMainColor =
-                    color.actualColor === product.color?.actualColor;
-                  const iconColor = isDarkColor(color.actualColor)
-                    ? "text-white"
-                    : "text-black";
-                  return (
-                    <Link
-                      key={color._id}
-                      to={`/products/${color._id}`}
-                      className={`relative inline-block rounded-full w-5 h-5 border border-gray-300`}
-                      style={{ backgroundColor: color.actualColor }}
-                      title={color.actualColor}
-                    >
-                      {isMainColor && (
-                        <div className="absolute p-[3px]">
-                          <HiCheck className={`w-3 h-3 ${iconColor}`} />
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })}
+              <div className="flex gap-4">
+                {isLoading || !colors.length
+                  ? Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="animate-pulse rounded-tl-lg rounded-br-lg w-[46px] h-[30px] bg-gray-100"
+                      />
+                    ))
+                  : colors.map((color: any) => {
+                      const isMainColor =
+                        color.actualColor === product.color?.actualColor;
+                      const iconColor = isDarkColor(color.actualColor)
+                        ? "text-white"
+                        : "text-black";
+                      return (
+                        <Link
+                          key={color._id}
+                          to={`/products/${color._id}`}
+                          className={`relative inline-block rounded-tl-lg rounded-br-lg w-[46px] h-[30px] border border-gray-300`}
+                          style={{ backgroundColor: color.actualColor }}
+                          title={color.actualColor}
+                        >
+                          {isMainColor && (
+                            <div className="absolute top-[4px] left-[11px]">
+                              <HiCheck className={`w-5 h-5 ${iconColor}`} />
+                            </div>
+                          )}
+                        </Link>
+                      );
+                    })}
               </div>
+
               <div className="flex gap-4 my-4">
                 {product.sizes.map(
                   (item: {

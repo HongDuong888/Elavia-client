@@ -63,7 +63,28 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
   const productVariants: ProductVariantWithDetails[] = data?.data || [];
   const wishlistIds: string[] =
     wishlistData?.data?.map((item: any) => item._id) || [];
-  console.log("test", wishlistData);
+  const fetchVariantByColor = async (
+    productId: string,
+    actualColor: string
+  ) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/product-variants/by-color`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ productId, actualColor }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Không tìm thấy biến thể");
+    }
+
+    const variant = await response.json();
+    return variant;
+  };
 
   const [colorsByProductId, setColorsByProductId] = useState<{
     [key: string]: Color[];
@@ -162,132 +183,167 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
   };
 
   const loadingPlaceholders = Array.from({ length: maxColumns });
+  const [selectedVariants, setSelectedVariants] = useState<{
+    [variantId: string]: ProductVariantWithDetails;
+  }>({});
 
-  // Hàm render nội dung sản phẩm (dùng chung cho SwiperSlide và grid)
-  const renderProductContent = (variant: ProductVariantWithDetails) => (
-    <div className="relative">
-      <Link
-        to={`/products/${encodeURIComponent(variant._id)}`}
-        className="group relative block max-w-[250px]"
-      >
-        <img
-          src={variant.images?.main.url || "/fallback.jpg"}
-          alt={variant.productId.name}
-          className="w-full transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
-          loading="lazy"
-          onError={handleImageError}
-        />
-        <img
-          src={variant.images?.hover.url || "/fallback.jpg"}
-          alt={variant.productId.name}
-          className="w-full absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
-          loading="lazy"
-          onError={handleImageError}
-        />
-      </Link>
-      <div className="flex gap-2 py-2 justify-between items-center pt-4">
-        <div className="flex gap-2">
-          {(colorsByProductId[variant.productId._id] || []).map(
-            (color: any) => {
-              const isMainColor =
-                color.actualColor === variant.color?.actualColor;
-              const iconColor = isDarkColor(color.actualColor)
-                ? "text-white"
-                : "text-black";
-              return (
-                <Link
-                  key={color._id}
-                  to={`/products/${color._id}`}
-                  className={`relative inline-block rounded-full w-5 h-5 border border-gray-300`}
-                  style={{ backgroundColor: color.actualColor }}
-                  title={color.actualColor}
-                >
-                  {isMainColor && (
-                    <div className="absolute p-[3px]">
-                      <HiCheck className={`w-3 h-3 ${iconColor}`} />
-                    </div>
-                  )}
-                </Link>
-              );
-            }
-          )}
-        </div>
-        <div>
-          <button
-            onClick={() => addWishList(variant._id)}
-            className={`add-wishlist ${
-              wishlistIds.includes(variant._id) ? "hidden" : ""
-            }`}
-            data-id={variant._id}
-            aria-label={`Thêm ${variant.productId.name} vào danh sách yêu thích`}
-            type="button"
-            disabled={addWishListMutation.isPending}
-          >
-            <img
-              src="/images/heart.png"
-              alt="Thêm vào danh sách yêu thích"
-              className="w-4 h-4"
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            onClick={() => removeWishList(variant._id)}
-            className={`remove-wishlist ${
-              wishlistIds.includes(variant._id) ? "" : "hidden"
-            }`}
-            data-id={variant._id}
-            aria-label={`Xóa ${variant.productId.name} khỏi danh sách yêu thích`}
-            type="button"
-            disabled={removeWishListMutation.isPending}
-          >
-            <img
-              src="/images/heart-black.png"
-              alt="Xóa khỏi danh sách yêu thích"
-              className="w-4 h-4"
-              aria-hidden="true"
-            />
-          </button>
-        </div>
-      </div>
-      <Link
-        to={`/products/${encodeURIComponent(variant._id)}`}
-        className="text-[14px] min-h-[55px] pt-3 block hover:text-orange-600 transition-all duration-300 cursor-pointer line-clamp-2"
-      >
-        {variant.productId.name}
-      </Link>
-      <div className="flex justify-between">
-        <div className="font-semibold pt-2">
-          {variant.price?.toLocaleString()}đ
-        </div>
-        <div
-          onClick={() =>
-            setSelectedProduct({
-              variantId: variant._id,
-              sizes: variant.sizes,
-            })
-          }
-          className="relative w-[32px] h-[32px] bg-black rounded-tl-lg rounded-br-lg group cursor-pointer hover:bg-gray-800 transition-all duration-300 ease-in-out"
+  const renderProductContent = (
+    displayVariant: ProductVariantWithDetails,
+    originalVariant: ProductVariantWithDetails
+  ) => {
+    return (
+      <div className="relative">
+        <Link
+          to={`/products/${encodeURIComponent(displayVariant._id)}`}
+          className="group relative block max-w-[250px]"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="size-5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-white"
+          <img
+            src={displayVariant.images?.main.url || "/fallback.jpg"}
+            alt={displayVariant.productId.name}
+            className="w-full transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
+            loading="lazy"
+            onError={handleImageError}
+          />
+          <img
+            src={displayVariant.images?.hover.url || "/fallback.jpg"}
+            alt={displayVariant.productId.name}
+            className="w-full absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
+            loading="lazy"
+            onError={handleImageError}
+          />
+        </Link>
+        <div className="flex gap-2 py-2 justify-between items-center pt-4">
+          <div className="flex gap-2">
+            {(colorsByProductId[originalVariant.productId._id] || []).map(
+              (color: any) => {
+                const isMainColor =
+                  color.actualColor === displayVariant.color?.actualColor;
+
+                const iconColor = isDarkColor(color.actualColor)
+                  ? "text-white"
+                  : "text-black";
+                return (
+                  <button
+                    onClick={() => {
+                      const found = productVariants.find(
+                        (v) =>
+                          v.productId._id === originalVariant.productId._id &&
+                          v.color.actualColor === color.actualColor
+                      );
+                      if (found) {
+                        // Có sẵn trong cache
+                        setSelectedVariants((prev) => ({
+                          ...prev,
+                          [originalVariant._id]: found,
+                        }));
+                      } else {
+                        // Không có sẵn → fetch thêm
+                        fetchVariantByColor(
+                          originalVariant.productId._id,
+                          color.actualColor
+                        )
+                          .then((variant) => {
+                            setSelectedVariants((prev) => ({
+                              ...prev,
+                              [originalVariant._id]: variant,
+                            }));
+                          })
+                          .catch((err) => {
+                            toast.error("Không tìm thấy biến thể màu này!");
+                          });
+                      }
+                    }}
+                    key={color._id || color.actualColor}
+                    className={`relative inline-block rounded-full w-5 h-5 border border-gray-300`}
+                    style={{ backgroundColor: color.actualColor }}
+                    title={color.actualColor}
+                  >
+                    {isMainColor && (
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <HiCheck className={`w-3 h-3 ${iconColor}`} />
+                      </div>
+                    )}
+                  </button>
+                );
+              }
+            )}
+          </div>
+          <div>
+            <button
+              onClick={() => addWishList(displayVariant._id)}
+              className={`add-wishlist ${
+                wishlistIds.includes(displayVariant._id) ? "hidden" : ""
+              }`}
+              data-id={displayVariant._id}
+              aria-label={`Thêm ${displayVariant.productId.name} vào danh sách yêu thích`}
+              type="button"
+              disabled={addWishListMutation.isPending}
+            >
+              <img
+                src="/images/heart.png"
+                alt="Thêm vào danh sách yêu thích"
+                className="w-4 h-4"
+                aria-hidden="true"
+              />
+            </button>
+            <button
+              onClick={() => removeWishList(displayVariant._id)}
+              className={`remove-wishlist ${
+                wishlistIds.includes(displayVariant._id) ? "" : "hidden"
+              }`}
+              data-id={displayVariant._id}
+              aria-label={`Xóa ${displayVariant.productId.name} khỏi danh sách yêu thích`}
+              type="button"
+              disabled={removeWishListMutation.isPending}
+            >
+              <img
+                src="/images/heart-black.png"
+                alt="Xóa khỏi danh sách yêu thích"
+                className="w-4 h-4"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+        </div>
+        <Link
+          to={`/products/${encodeURIComponent(displayVariant._id)}`}
+          className="text-[14px] min-h-[55px] pt-3 block hover:text-orange-600 transition-all duration-300 cursor-pointer line-clamp-2"
+        >
+          {displayVariant.productId.name}
+        </Link>
+        <div className="flex justify-between">
+          <div className="font-semibold pt-2">
+            {displayVariant.price?.toLocaleString()}đ
+          </div>
+          <div
+            onClick={() =>
+              setSelectedProduct({
+                variantId: displayVariant._id,
+                sizes: displayVariant.sizes,
+              })
+            }
+            className="relative w-[32px] h-[32px] bg-black rounded-tl-lg rounded-br-lg group cursor-pointer hover:bg-gray-800 transition-all duration-300 ease-in-out"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-white"
-              d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
-            />
-          </svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-5 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:text-white"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-white"
+                d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+              />
+            </svg>
+          </div>
         </div>
       </div>
-    </div>
-  );
-
+    );
+  };
   return (
     <div className="mb-8">
       {error && (
@@ -323,21 +379,29 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
                 1280: { slidesPerView: 5 },
               }}
             >
-              {productVariants.map((variant) => (
-                <SwiperSlide key={variant._id} className="relative">
-                  {renderProductContent(variant)}
-                </SwiperSlide>
-              ))}
+              {productVariants.map((variant) => {
+                const displayVariant = selectedVariants[variant._id] || variant;
+
+                return (
+                  <SwiperSlide key={variant._id} className="relative">
+                    {renderProductContent(displayVariant, variant)}
+                  </SwiperSlide>
+                );
+              })}
             </Swiper>
           ) : (
             <div
               className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-${maxColumns} gap-4`}
             >
-              {productVariants.map((variant) => (
-                <div key={variant._id} className="relative">
-                  {renderProductContent(variant)}
-                </div>
-              ))}
+              {productVariants.map((variant) => {
+                const displayVariant = selectedVariants[variant._id] || variant;
+
+                return (
+                  <div key={variant._id} className="relative">
+                    {renderProductContent(displayVariant, variant)}
+                  </div>
+                );
+              })}
             </div>
           )}
         </>

@@ -1,5 +1,6 @@
 import { Slideshow, SlideshowTwo } from "../../components/clientSlideShow";
 import ProductItemForm from "../../components/productItem";
+import ProductItemVariantForm from "../../components/productItemVariant";
 import ClientLayout from "../../layouts/clientLayout";
 
 const Slideshow1 = () => {
@@ -58,7 +59,7 @@ const Home = () => {
 
           {/* Product Items */}
           <div className="w-full">
-            <ProductItemForm namespace="products" />
+            <ProductItemVariantForm namespace="product-variants/products-unique" />
           </div>
 
           {/* View All Button */}
@@ -78,7 +79,7 @@ const Home = () => {
           </div>
 
           <div className="w-full">
-            <ProductItemForm namespace="products" />
+            <ProductItemVariantForm namespace="product-variants/representativeVariant" />
           </div>
 
           <div className="p-2 sm:p-3 border border-black text-center w-28 sm:w-32 h-10 sm:h-12 mx-auto rounded-tl-[25px] rounded-br-[25px] mb-8 sm:mb-12 hover:bg-black hover:text-white transition-all duration-300 cursor-pointer flex items-center justify-center">
