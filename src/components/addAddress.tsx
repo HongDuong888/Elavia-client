@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 interface Props {
   defaultAddressId: string | null;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (newAddressId?: string) => void; // sửa lại
 }
 
 const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
@@ -85,9 +85,7 @@ const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
 
       if ((isDefault || !defaultAddressId) && newAddressId) {
         await axios.put(
-          `${
-            import.meta.env.VITE_API_URL
-          }/auth/address/default/${newAddressId}`,
+          `${import.meta.env.VITE_API_URL}/auth/address/default/${newAddressId}`,
           {},
           {
             headers: {
@@ -97,7 +95,7 @@ const AddAddressModal = ({ defaultAddressId, onClose, onSuccess }: Props) => {
         );
       }
       toast.success("Thêm địa chỉ thành công!");
-      onSuccess();
+      onSuccess(newAddressId); // truyền _id về
       onClose();
     } catch (error) {
       toast.error("Thêm địa chỉ thất bại!");

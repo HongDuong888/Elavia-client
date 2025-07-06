@@ -37,6 +37,7 @@ const Dathang = () => {
   }
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [shippingFee, setShippingFee] = useState(0);
+  const [lastAddedAddressId, setLastAddedAddressId] = useState<string | null>(null);
 
   const {
     data: cartItems,
@@ -86,10 +87,25 @@ const Dathang = () => {
   }
 
   useEffect(() => {
-    if (userData && userData.length > 0) {
-      setSelectedAddress(userData[0]);
+    if (myInfoData?.shipping_addresses?.length > 0) {
+      // Nếu vừa thêm mới, ưu tiên chọn địa chỉ mới
+      if (lastAddedAddressId) {
+        const newAddr = myInfoData.shipping_addresses.find(
+          (addr: any) => addr._id === lastAddedAddressId
+        );
+        if (newAddr) {
+          setSelectedAddress(newAddr);
+          setLastAddedAddressId(null); // reset lại sau khi đã chọn
+          return;
+        }
+      }
+      // Nếu không thì chọn mặc định như cũ
+      const defaultAddr = myInfoData.shipping_addresses.find(
+        (addr: any) => addr._id === myInfoData.defaultAddress
+      );
+      setSelectedAddress(defaultAddr || myInfoData.shipping_addresses[0]);
     }
-  }, [userData]);
+  }, [myInfoData]);
 
   const currentAddress =
     selectedAddress || (userData && userData.length > 0 ? userData[0] : null);
@@ -822,15 +838,18 @@ const Dathang = () => {
         <AddAddressModal
           defaultAddressId={userData[0]?._id || null}
           onClose={() => setShowAddModal(false)}
-          onSuccess={() =>
-            queryClient.invalidateQueries({ queryKey: ["users", auth.user.id] })
-          }
+          onSuccess={(newAddressId?: string) => {
+            queryClient.invalidateQueries({ queryKey: ["users", auth.user.id] });
+            queryClient.invalidateQueries({ queryKey: ["myInfo"] });
+            if (newAddressId) setLastAddedAddressId(newAddressId);
+          }}
         />
       )}
       {showAddressModal && (
         <SelectAddressModal
           addresses={shipping_addresses}
           defaultAddressId={defaultAddressId}
+          selectedAddressId={selectedAddress?._id}
           onSelect={(address: any) => {
             if (selectedAddress?._id !== address._id) {
               setShippingFee(0);

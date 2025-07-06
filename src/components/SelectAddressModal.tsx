@@ -15,6 +15,7 @@ type AddressForm = {
 interface SelectAddressModalProps {
   addresses: AddressForm[];
   defaultAddressId?: string;
+  selectedAddressId?: string; // Thêm dòng này
   onSelect: (address: AddressForm) => void;
   onClose: () => void;
 }
@@ -22,6 +23,7 @@ interface SelectAddressModalProps {
 const SelectAddressModal = ({
   addresses,
   defaultAddressId,
+  selectedAddressId,
   onSelect,
   onClose,
 }: SelectAddressModalProps) => {
@@ -48,32 +50,44 @@ const SelectAddressModal = ({
         </button>
         <h3 className="text-lg font-bold mb-4">Chọn địa chỉ</h3>
         {Array.isArray(addresses) && addresses.length > 0 ? (
-          sortedAddresses.map((address) => (
-            <div
-              key={address._id}
-              className="border-[1px] rounded-tl-2xl rounded-br-2xl mb-4 p-6 flex justify-between items-center"
-              onClick={() => onSelect(address)}
-            >
-              <div>
-                <div className="font-semibold">{address.receiver_name}</div>
-                <div className="text-sm mb-1">
-                  Loại địa chỉ: {address.type === "home" ? "Nhà ở" : "Công ty"}
+          sortedAddresses.map((address) => {
+            const isSelected = selectedAddressId === address._id;
+            return (
+              <div
+                key={address._id}
+                className={
+                  `border rounded-tl-2xl rounded-br-2xl mb-4 p-6 flex justify-between items-center transition-all duration-200 ` +
+                  (isSelected
+                    ? "border-green-500 bg-white"
+                    : "border-gray-200 hover:border-green-500 cursor-pointer")
+                }
+                onClick={() => onSelect(address)}
+                style={{
+                
+                  pointerEvents: isSelected ? "none" : "auto",
+                }}
+              >
+                <div>
+                  <div className="font-semibold">{address.receiver_name}</div>
+                  <div className="text-sm mb-1">
+                    Loại địa chỉ: {address.type === "home" ? "Nhà ở" : "Công ty"}
+                  </div>
+                  <div className="text-sm">Điện thoại: {address.phone}</div>
+                  <div className="text-sm">
+                    Địa chỉ: {address.address}, {address.ward?.name},{" "}
+                    {address.district?.name}, {address.city?.name}
+                  </div>
                 </div>
-                <div className="text-sm">Điện thoại: {address.phone}</div>
-                <div className="text-sm">
-                  Địa chỉ: {address.address}, {address.ward?.name},{" "}
-                  {address.district?.name}, {address.city?.name}
-                </div>
+                {defaultAddressId === address._id && (
+                  <button
+                    className="bg-black text-white px-2 py-0 text-xs rounded-tl-[10px] rounded-br-[10px] w-[90px] h-[32px] flex justify-center items-center transition-all duration-300 hover:bg-white hover:text-black hover:border-[1px] hover:border-black"
+                  >
+                    Mặc định
+                  </button>
+                )}
               </div>
-              {defaultAddressId === address._id && (
-                <button
-                  className="bg-black text-white px-2 py-0 text-xs rounded-tl-[10px] rounded-br-[10px] w-[90px] h-[32px] flex justify-center items-center transition-all duration-300 hover:bg-white hover:text-black hover:border-[1px] hover:border-black"
-                >
-                  Mặc định
-                </button>
-              )}
-            </div>
-          ))
+            );
+          })
         ) : (
           <div>Không có địa chỉ nào.</div>
         )}
