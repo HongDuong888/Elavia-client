@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import useCartQuantity from "../hooks/useCartQuantity";
 import { getList } from "../api/provider";
 import Loading from "../components/loading";
+import { Phone, User, ShoppingBag } from "lucide-react";
 
 // Định nghĩa kiểu dữ liệu cho danh mục
 interface Category {
@@ -233,21 +234,17 @@ const MenuClient = () => {
 
           <div className="hidden md:block">
             <Link to="/support">
-              <img
-                src="/images/earphones.png"
-                alt="Hỗ trợ"
-                className="w-5 h-auto"
-              />
+              <Phone className="w-5 h-5 text-gray-800" strokeWidth={1} />
             </Link>
           </div>
 
           <div className="hidden md:block relative user-menu-container">
-            <img
-              src="/images/user.png"
-              alt="Người dùng"
-              className="w-5 h-auto cursor-pointer"
+            <User
+              className="w-5 h-5 text-gray-800 cursor-pointer"
+              strokeWidth={1}
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             />
+
             {isUserMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white border shadow-lg z-50 py-2">
                 {isAuthenticated ? (
@@ -258,14 +255,6 @@ const MenuClient = () => {
                     >
                       Thông tin tài khoản
                     </Link>
-                    {user.role === "3" && (
-                      <Link
-                        to="/admin"
-                        className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
-                      >
-                        Quản trị admin
-                      </Link>
-                    )}
                     <Link
                       to="/orders"
                       className="block px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
@@ -316,14 +305,10 @@ const MenuClient = () => {
 
           <div className="relative flex items-center justify-center cursor-pointer">
             <Link to="/cart">
-              <img
-                src="/images/shopping-bag.png"
-                alt="Giỏ hàng"
-                className="w-7 h-auto"
-              />
+              <ShoppingBag className="w-5 h-5 text-gray-800" strokeWidth={1} />
             </Link>
             {quantity > 0 && (
-              <span className="absolute -top-[-15px] -right-[5px] bg-black text-white text-[10px] w-3 h-3 rounded-full flex items-center justify-center">
+              <span className="absolute -top-[-10px] -right-[5px] bg-black text-white text-[10px] w-3 h-3 rounded-full flex items-center justify-center">
                 {quantity}
               </span>
             )}

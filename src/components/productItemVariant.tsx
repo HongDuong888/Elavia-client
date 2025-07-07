@@ -9,7 +9,7 @@ import { usePostItem } from "../hooks/usePostItem";
 import { useAddToCart } from "../hooks/useAddToCart";
 import { useAuth } from "../context/auth.context";
 import { toast } from "react-toastify";
-import { HiCheck } from "react-icons/hi";
+import { Check, Heart } from "lucide-react";
 
 interface ProductVariantWithDetails {
   _id: string;
@@ -260,7 +260,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
                   >
                     {isMainColor && (
                       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <HiCheck className={`w-3 h-3 ${iconColor}`} />
+                        <Check className={`w-3 h-3 ${iconColor}`} />
                       </div>
                     )}
                   </button>
@@ -268,7 +268,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
               }
             )}
           </div>
-          <div>
+          <div className="flex gap-2">
             <button
               onClick={() => addWishList(displayVariant._id)}
               className={`add-wishlist ${
@@ -279,12 +279,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
               type="button"
               disabled={addWishListMutation.isPending}
             >
-              <img
-                src="/images/heart.png"
-                alt="Thêm vào danh sách yêu thích"
-                className="w-4 h-4"
-                aria-hidden="true"
-              />
+              <Heart className="w-5 h-5 text-black" strokeWidth={1} />
             </button>
             <button
               onClick={() => removeWishList(displayVariant._id)}
@@ -296,12 +291,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
               type="button"
               disabled={removeWishListMutation.isPending}
             >
-              <img
-                src="/images/heart-black.png"
-                alt="Xóa khỏi danh sách yêu thích"
-                className="w-4 h-4"
-                aria-hidden="true"
-              />
+              <Heart className="w-5 h-5 text-black fill-black" />
             </button>
           </div>
         </div>

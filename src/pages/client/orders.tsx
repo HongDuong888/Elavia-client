@@ -153,6 +153,9 @@ const Orders = () => {
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      STT
+                    </th>
+                    <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Mã đơn hàng
                     </th>
                     <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
@@ -176,6 +179,9 @@ const Orders = () => {
                         key={order._id}
                         className="hover:bg-gray-50 transition-colors duration-200"
                       >
+                        <td className="py-4 pr-6 text-sm text-gray-900">
+                          {pagination.pageSize * (currentPage - 1) + index + 1}
+                        </td>
                         <td className="py-4 pr-6 text-sm text-gray-900">
                           {order.orderId}
                         </td>

@@ -12,7 +12,12 @@ import ClientLayout from "../../layouts/clientLayout";
 import { usePostItem } from "../../hooks/usePostItem";
 import { useAddToCart } from "../../hooks/useAddToCart";
 import ProductItemVariantForm from "../../components/productItemVariant";
-import { HiCheck } from "react-icons/hi";
+import CheckSizeModal from "../../components/CheckSizeModal";
+import { Check, ClipboardList, Heart } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
 
 const DetailProduct = ({ productId }: { productId: string }) => {
   const queryClient = useQueryClient();
@@ -32,6 +37,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("gioi_thieu");
+  const [showCheckSize, setShowCheckSize] = useState(false);
   const formData = new FormData();
   const postItemMutation = usePostItem({ showToast: false });
   const [colors, setColors] = useState<any[]>([]);
@@ -187,12 +193,10 @@ const DetailProduct = ({ productId }: { productId: string }) => {
           </div>
           <hr className="mb-8" />
 
-          <div className="grid grid-cols-2">
-            <div className="w-[100%] flex gap-3">
-              <div
-                id="zoomLayout"
-                className="relative w-[80%] h-[844.5px] overflow-hidden"
-              >
+          <div className="grid grid-cols-2 gap-8">
+            <div className="w-full flex gap-3">
+              {/* Ảnh chính */}
+              <div className="relative w-[80%] h-[800.5px] overflow-hidden">
                 <img
                   id="mainImage"
                   src={product.images.main.url}
@@ -200,32 +204,45 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                   alt={product.productId.name}
                 />
               </div>
-              <div className="relative overflow-hidden h-[720px] mt-[60px]">
-                <div
-                  id="slideshow"
-                  className="flex flex-col gap-4 transition-transform duration-500"
+
+              {/* Swiper dọc ảnh nhỏ */}
+              <div className="w-[18%] h-[700.5px] mt-12">
+                <Swiper
+                  direction="vertical"
+                  slidesPerView={4}
+                  spaceBetween={4}
+                  loop={true}
+                  autoplay={{
+                    delay: 2500,
+                    disableOnInteraction: false,
+                  }}
+                  speed={1000}
+                  className="h-full"
+                  modules={[Autoplay]}
                 >
                   {[
                     product.images.main?.url,
                     product.images.hover?.url,
                     ...product.images.product.map((img: any) => img.url),
                   ].map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
-                      className="w-[100%] h-[174px] object-cover cursor-pointer"
-                      alt={`Thumbnail ${index + 1}`}
-                      onClick={() => {
-                        const mainImage = document.getElementById(
-                          "mainImage"
-                        ) as HTMLImageElement | null;
-                        if (mainImage) mainImage.src = img;
-                      }}
-                    />
+                    <SwiperSlide key={index}>
+                      <img
+                        src={img}
+                        className="w-full h-[165px] object-cover cursor-pointer hover:brightness-90 transition-all duration-300"
+                        alt={`Thumbnail ${index + 1}`}
+                        onClick={() => {
+                          const mainImage = document.getElementById(
+                            "mainImage"
+                          ) as HTMLImageElement;
+                          if (mainImage) mainImage.src = img;
+                        }}
+                      />
+                    </SwiperSlide>
                   ))}
-                </div>
+                </Swiper>
               </div>
             </div>
+
             <div className="pl-[30px]">
               <div className="text-3xl font-[550]">
                 {product.productId.name}
@@ -273,7 +290,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                         >
                           {isMainColor && (
                             <div className="absolute top-[4px] left-[11px]">
-                              <HiCheck className={`w-5 h-5 ${iconColor}`} />
+                              <Check className={`w-5 h-5 ${iconColor}`} />
                             </div>
                           )}
                         </Link>
@@ -304,17 +321,38 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                   )
                 )}
               </div>
-
-              <div className="text-xs flex items-center mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 512 512"
-                  className="w-3 h-3 text-gray-500"
-                >
-                  <path d="M177.9 494.1c-18.7 18.7-49.1 18.7-67.9 0L17.9 401.9c-18.7-18.7-18.7-49.1 0-67.9l50.7-50.7 48 48c6.2 6.2 16.4 6.2 22.6 0s6.2-16.4 0-22.6l-48-48 41.4-41.4 48 48c6.2 6.2 16.4 6.2 22.6 0s6.2-16.4 0-22.6l-48-48 41.4-41.4 48 48c6.2 6.2 16.4 6.2 22.6 0s6.2-16.4 0-22.6l-48-48 50.7-50.7c18.7-18.7 49.1-18.7 67.9 0l92.1 92.1c18.7 18.7 18.7 49.1 0 67.9L177.9 494.1z" />
-                </svg>
+              <div className="mb-2 text-xs flex gap-1 items-center">
+                Số lượng còn lại:
+                {selectedSize &&
+                  (isLoading ? (
+                    <span className="inline-block w-6 h-4 bg-gray-200 animate-pulse rounded align-middle"></span>
+                  ) : (
+                    (() => {
+                      const selected = product.sizes.find(
+                        (s: any) => s.size === selectedSize
+                      );
+                      if (selected) {
+                        return (
+                          <span className="font-semibold">
+                            {selected.stock}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()
+                  ))}
+              </div>
+              <div
+                className="text-xs flex items-center mb-4 cursor-pointer hover:text-orange-600 transition-all duration-300 group w-[150px]"
+                onClick={() => setShowCheckSize(true)}
+              >
+                <ClipboardList className="w-3 h-3 text-gray-500 mr-1 group-hover:text-orange-600 transition-all duration-300" />
                 Kiểm tra size của bạn
               </div>
+
+              {showCheckSize && (
+                <CheckSizeModal onClose={() => setShowCheckSize(false)} />
+              )}
 
               <div className="flex items-center gap-4">
                 <div className="font-[500] text-[#727171]">Số lượng</div>
@@ -336,7 +374,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-4 mb-20">
+              <div className="flex items-center gap-4 mb-10">
                 <div
                   className={`my-4 text-lg font-semibold w-[174px] h-[48px] rounded-tl-[15px] rounded-br-[15px] flex justify-center items-center transition-all duration-300 ${
                     isOutOfStock
@@ -402,17 +440,10 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                     type="button"
                     disabled={addWishListMutation.isPending}
                   >
-                    <img
-                      src="/images/heart.png"
-                      alt="Thêm vào danh sách yêu thích"
-                      className="w-4 h-4 transition-all duration-300 group-hover:hidden"
+                    <Heart
+                      className="w-4 h-4 stroke-black fill-white group-hover:fill-white group-hover:stroke-white transition-all duration-300"
                       aria-hidden="true"
-                    />
-                    <img
-                      src="/images/heart-border-white.png"
-                      alt="Thêm vào danh sách yêu thích (hover)"
-                      className="w-4 h-4 transition-all duration-300 hidden group-hover:block"
-                      aria-hidden="true"
+                      strokeWidth={1.6}
                     />
                   </button>
 
@@ -427,22 +458,13 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                     type="button"
                     disabled={removeWishListMutation.isPending}
                   >
-                    <img
-                      src="/images/heart-black.png"
-                      alt="Xóa khỏi danh sách yêu thích"
-                      className="w-4 h-4 transition-all duration-300 group-hover:hidden"
-                      aria-hidden="true"
-                    />
-                    <img
-                      src="/images/heart-white.png"
-                      alt="Xóa khỏi danh sách yêu thích (hover)"
-                      className="w-4 h-4 transition-all duration-300 hidden group-hover:block"
+                    <Heart
+                      className="w-4 h-4 stroke-black fill-black group-hover:fill-white group-hover:stroke-white transition-all duration-300"
                       aria-hidden="true"
                     />
                   </button>
                 </div>
               </div>
-
               <hr />
               <div>
                 <div className="flex gap-6">
