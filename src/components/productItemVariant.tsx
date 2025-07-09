@@ -35,24 +35,29 @@ interface Color {
 }
 
 interface ProductItemFormProps {
-  namespace: string;
+  namespace?: string;
+  productVariants?: ProductVariantWithDetails[];
   isSlideshow?: boolean;
-  maxColumns?: 4 | 5; // Giới hạn maxColumns là 4 hoặc 5
+  maxColumns?: 4 | 5;
 }
 
 const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
   namespace,
+  productVariants: externalVariants, // ✅
   isSlideshow = true,
-  maxColumns = 5, // Mặc định là 5 cột
+  maxColumns = 5,
 }) => {
-  const queryClient = useQueryClient();
-  const { auth } = useAuth();
-
   const { data, isLoading, error } = useQuery({
+    // 🟡
     queryKey: ["product-variants", namespace],
-    queryFn: async () => getList({ namespace: `${namespace}` }),
+    queryFn: namespace ? async () => getList({ namespace }) : async () => [],
+    enabled: !!namespace && !externalVariants, // ✅ chỉ fetch nếu không có externalVariants
     staleTime: 60 * 1000,
   });
+  const queryClient = useQueryClient();
+  const { auth } = useAuth();
+  const productVariants: ProductVariantWithDetails[] =
+    externalVariants || data?.data || [];
 
   const { data: wishlistData, isLoading: isWishlistLoading } = useQuery({
     queryKey: ["wishlist"],
@@ -60,7 +65,6 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
     staleTime: 60 * 1000,
   });
 
-  const productVariants: ProductVariantWithDetails[] = data?.data || [];
   const wishlistIds: string[] =
     wishlistData?.data?.map((item: any) => item._id) || [];
   const fetchVariantByColor = async (

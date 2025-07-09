@@ -63,7 +63,16 @@ const MenuClient = () => {
       toast.error("Đăng xuất thất bại!");
     },
   });
+  const [searchTerm, setSearchTerm] = useState("");
 
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchTerm.trim() !== "") {
+      navigate(
+        `/search-product?keyword=${encodeURIComponent(searchTerm.trim())}`
+      );
+      setSearchTerm(""); // clear ô input
+    }
+  };
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -226,6 +235,9 @@ const MenuClient = () => {
                 type="text"
                 name="searchname"
                 id="searchname"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleSearch}
                 placeholder="TÌM KIẾM SẢN PHẨM"
                 className="text-xs p-0 outline-none border-0 focus:outline-none focus:ring-0 w-full"
               />
