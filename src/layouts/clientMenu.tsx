@@ -226,11 +226,28 @@ const MenuClient = () => {
         <div className="flex items-center justify-end space-x-6">
           <div className="hidden md:flex relative h-9 border items-center w-full max-w-xs">
             <div className="flex px-2 gap-3 items-center w-full">
-              <img
-                src="/images/magnifying-glass.png"
-                alt="Search"
-                className="w-4 h-4 flex-shrink-0"
-              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (searchTerm.trim() !== "") {
+                    navigate(
+                      `/search-product?keyword=${encodeURIComponent(
+                        searchTerm.trim()
+                      )}`
+                    );
+                    setSearchTerm("");
+                  }
+                }}
+                className="focus:outline-none"
+                tabIndex={-1}
+                aria-label="Tìm kiếm"
+              >
+                <img
+                  src="/images/magnifying-glass.png"
+                  alt="Search"
+                  className="w-4 h-4 flex-shrink-0 cursor-pointer"
+                />
+              </button>
               <input
                 type="text"
                 name="searchname"
