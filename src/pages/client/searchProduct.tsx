@@ -136,18 +136,38 @@ const SearchProduct = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {[...Array(totalPages)].map((_, i) => (
+            <div className="mt-8 flex justify-center items-center space-x-2 text-sm">
+              {/* Nút về trang đầu « */}
+              <button
+                onClick={() => fetchProducts(1)}
+                className="w-9 h-9 border border-black rounded-tl-lg rounded-br-lg transition-all duration-300 bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={currentPage === 1}
+              >
+                &laquo;
+              </button>
+              {/* Các nút số trang */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <button
-                  key={i + 1}
-                  onClick={() => fetchProducts(i + 1)}
-                  className={`px-3 py-1 border ${
-                    currentPage === i + 1 ? "bg-black text-white" : "text-black"
+                  key={p}
+                  onClick={() => fetchProducts(p)}
+                  className={`w-9 h-9 border rounded-tl-lg rounded-br-lg transition-all duration-300 ${
+                    currentPage === p
+                      ? "bg-black text-white border-black cursor-default"
+                      : "bg-white text-black border-black hover:bg-black hover:text-white"
                   }`}
+                  disabled={currentPage === p}
                 >
-                  {i + 1}
+                  {p}
                 </button>
               ))}
+              {/* Nút trang kế tiếp » */}
+              <button
+                onClick={() => fetchProducts(currentPage + 1)}
+                className="w-9 h-9 border border-black rounded-tl-lg rounded-br-lg transition-all duration-300 bg-white text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={currentPage >= totalPages}
+              >
+                &raquo;
+              </button>
             </div>
           )}
         </div>
