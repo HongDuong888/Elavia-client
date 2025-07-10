@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../context/auth.context";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   User,
   Fingerprint,
@@ -12,6 +12,8 @@ import {
 
 const MenuInfo = () => {
   const { auth } = useAuth();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   return (
     <div className="py-6 px-4 font-bold border border-gray-300 rounded-tl-[40px] rounded-br-[40px]">
@@ -36,7 +38,11 @@ const MenuInfo = () => {
           <li className="px-4 py-2">
             <Link
               to="/user-details"
-              className="flex items-center gap-2 text-gray-500 hover:text-black text-sm font-medium transition"
+              className={`flex items-center gap-2 text-sm font-medium transition ${
+                currentPath === "/user-details"
+                  ? "font-bold text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
               <User className="w-4 h-4" strokeWidth={1.25} />
               Thông tin tài khoản
@@ -46,7 +52,11 @@ const MenuInfo = () => {
           <li className="px-4 py-2">
             <Link
               to="/loginHistory"
-              className="flex items-center gap-2 text-gray-500 hover:text-black text-sm font-medium transition"
+              className={`flex items-center gap-2 text-sm font-medium transition ${
+                currentPath === "/loginHistory"
+                  ? "font-bold text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
               <Fingerprint className="w-4 h-4" strokeWidth={1.25} />
               Lịch sử đăng nhập
@@ -56,7 +66,11 @@ const MenuInfo = () => {
           <li className="px-4 py-2">
             <Link
               to="/orders"
-              className="flex items-center gap-2 text-gray-500 hover:text-black text-sm font-medium transition"
+              className={`flex items-center gap-2 text-sm font-medium transition ${
+                currentPath === "/orders"
+                  ? "font-bold text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
               <ClipboardList className="w-4 h-4" strokeWidth={1.25} />
               Quản lý đơn hàng
@@ -66,7 +80,11 @@ const MenuInfo = () => {
           <li className="px-4 py-2">
             <Link
               to="/address"
-              className="flex items-center gap-2 text-gray-500 hover:text-black text-sm font-medium transition"
+              className={`flex items-center gap-2 text-sm font-medium transition ${
+                currentPath === "/address"
+                  ? "font-bold text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
               <MapPin className="w-4 h-4" strokeWidth={1.25} />
               Sổ địa chỉ
@@ -76,7 +94,11 @@ const MenuInfo = () => {
           <li className="px-4 py-2">
             <Link
               to="/wish-products"
-              className="flex items-center gap-2 text-gray-500 hover:text-black text-sm font-medium transition"
+              className={`flex items-center gap-2 text-sm font-medium transition ${
+                currentPath === "/wish-products"
+                  ? "font-bold text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
               <Heart className="w-4 h-4" strokeWidth={1.25} />
               Sản phẩm yêu thích
@@ -86,7 +108,11 @@ const MenuInfo = () => {
           <li className="px-4 py-2">
             <Link
               to="/viewed-products"
-              className="flex items-center gap-2 text-gray-500 hover:text-black text-sm font-medium transition"
+              className={`flex items-center gap-2 text-sm font-medium transition ${
+                currentPath === "/viewed-products"
+                  ? "font-bold text-black"
+                  : "text-gray-500 hover:text-black"
+              }`}
             >
               <Eye className="w-4 h-4" strokeWidth={1.25} />
               Sản phẩm đã xem
