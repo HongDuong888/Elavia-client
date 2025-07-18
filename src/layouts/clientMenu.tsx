@@ -141,12 +141,12 @@ const MenuClient = () => {
                   onMouseLeave={handleMouseLeave} // Ẩn dropdown với độ trễ
                 >
                   {/* Danh mục cấp 1 */}
-                  <Link
-                    to={`/category/${category._id}`}
-                    className="text-[12px] font-semibold text-gray-800 hover:text-red-500 transition-all duration-300"
+                 <a
+                    href="javascript:void(0)"
+                    className="text-[12px] font-semibold text-gray-800 hover:text-red-500 transition-all duration-300 cursor-default"
                   >
                     {category.name.toUpperCase()}
-                  </Link>
+                  </a>
 
                   {/* Dropdown danh mục cấp 2 và cấp 3 */}
                   {activeDropdown === category._id &&

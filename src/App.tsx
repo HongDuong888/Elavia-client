@@ -23,6 +23,7 @@ import Ordersuccess from "./pages/client/orderSuccess";
 import OrderFollow from "./pages/client/orderFollow";
 import LoginHistory from "./pages/client/loginHistory";
 import SearchProduct from "./pages/client/searchProduct";
+import CategoryProducts from "./pages/client/categoryProducts";
 
 function App() {
   const DetailProductWrapper = () => {
@@ -37,6 +38,7 @@ function App() {
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
     { path: "/search-product", element: <SearchProduct /> },
+    { path: "/category/:categoryId", element: <CategoryProducts /> },
     { path: "/verify-account", element: <VerifyAccount /> },
     { path: "/terms-policy", element: <TermsPolicy /> },
     { path: "/buying-guide", element: <BuyingGuide /> },
