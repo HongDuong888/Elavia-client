@@ -214,7 +214,7 @@ const Orders = () => {
                           </span>
                         </td>
                         <td className="py-4 pr-6 text-sm text-gray-900 font-medium">
-                          {order.totalPrice.toLocaleString("vi-VN")} đ
+                          {order.finalAmount.toLocaleString("vi-VN")} đ
                         </td>
                         <td className="py-4 pr-6 text-sm font-medium">
                           <div className="flex items-center gap-3">

@@ -18,6 +18,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
+import ReviewList from "../../components/reviewList";
+import axiosInstance from "../../services/axiosInstance";
 
 const DetailProduct = ({ productId }: { productId: string }) => {
   const queryClient = useQueryClient();
@@ -47,6 +49,16 @@ const DetailProduct = ({ productId }: { productId: string }) => {
     queryFn: async () => getList({ namespace: "wishlist" }),
     staleTime: 60 * 1000,
   });
+  const { data } = useQuery({
+  queryKey: ["reviews", productId],
+  queryFn: () =>
+    axiosInstance.get(`/reviews/${productId}`).then((res) => res.data),
+});
+const reviews = data?.data || []; 
+const totalReviews = reviews.length;
+const averageRating = totalReviews
+  ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews).toFixed(1)
+  : "0.0";
   const wishlistIds: string[] =
     wishlistData?.data?.map((item: any) => item._id) || [];
 
@@ -114,7 +126,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
       });
     }
   };
-
+  
   const removeWishList = (id: string) => {
     if (id) {
       removeWishListMutation.mutate({
@@ -253,10 +265,10 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                   <Rate
                     disabled
                     allowHalf
-                    defaultValue={2.5}
-                    className="text-yellow-500 flex items-center justify-center [&_.ant-rate-star]:!text-[16px] [&_.ant-rate-star-second]:!text-[16px] [&_.ant-rate-star-half]:!text-[16px] [&_.ant-rate-star-full]:!text-[16px] [&_.ant-rate-star-half-left]:!text-[16px] [&_.ant-rate-star-half-right]:!text-[16px] [&_.ant-rate-star]:!mr-[0px]"
+                    defaultValue={parseFloat(averageRating)}
+                                        className="text-yellow-500 flex items-center justify-center [&_.ant-rate-star]:!text-[16px] [&_.ant-rate-star-second]:!text-[16px] [&_.ant-rate-star-half]:!text-[16px] [&_.ant-rate-star-full]:!text-[16px] [&_.ant-rate-star-half-left]:!text-[16px] [&_.ant-rate-star-half-right]:!text-[16px] [&_.ant-rate-star]:!mr-[0px]"
                   />
-                  <div className="text-gray-500">(0 đánh giá)</div>
+                  <div className="text-gray-500">({totalReviews} đánh giá)</div>
                 </div>
               </div>
               <div className="text-2xl font-[550]">
@@ -545,6 +557,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
               isSlideshow
             />
           </div>
+           <ReviewList productVariantId={product._id} />
           <div>
             <img
               src="/images/banner1.3.webp"
