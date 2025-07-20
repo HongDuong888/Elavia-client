@@ -109,7 +109,7 @@ const FilterSidebar = ({
   };
 
   return (
-    <div className="w-full md:w-1/4 p-4 max-h-[90vh] text-base font-medium text-black flex flex-col relative">
+    <div className="w-[300px] min-w-[260px] p-4 max-h-[90vh] text-base font-medium text-black flex flex-col relative bg-white">
       {/* Nội dung lọc */}
       <div className="flex-1 overflow-y-auto pb-24">
         {/* Size */}
