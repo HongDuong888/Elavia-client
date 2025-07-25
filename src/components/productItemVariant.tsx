@@ -57,7 +57,10 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
   const queryClient = useQueryClient();
   const { auth } = useAuth();
   const productVariants: ProductVariantWithDetails[] =
-    externalVariants || data?.data || [];
+    externalVariants ||
+    data?.data ||
+    (Array.isArray(data) ? data : []) ||
+    [];
 
   const { data: wishlistData, isLoading: isWishlistLoading } = useQuery({
     queryKey: ["wishlist"],
@@ -338,6 +341,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
       </div>
     );
   };
+  console.log("namespace:", namespace, "data:", data);
   return (
     <div className="mb-8">
       {error && (
