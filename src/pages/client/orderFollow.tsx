@@ -140,8 +140,8 @@ const OrderFollow = () => {
 
             {/* Chi tiết trạng thái đơn hàng */}
             <div className="mt-8">
-              <h3 className="font-semibold mb-4 text-lg">
-                Chi tiết trạng thái đơn hàng
+              <h3 className="font-semibold mb-4 text-lg flex">
+                Chi tiết trạng thái đơn hàng  <span className="text-red-600 ml-2">#{data.orderId}</span>
               </h3>
               <div className="relative ml-4">
                 <div

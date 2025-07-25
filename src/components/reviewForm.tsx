@@ -47,20 +47,34 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
     }
   }, [mode, initialData]);
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files) return;
 
-    const selectedFiles = Array.from(files).slice(0, 5);
-    setImages((prev) => [...prev, ...selectedFiles]);
+  const selectedFiles = Array.from(files);
 
-    const newPreviews = selectedFiles.map((file) =>
-      URL.createObjectURL(file)
-    );
-    setPreviewUrls((prev) => [...prev, ...newPreviews]);
-  };
+  const totalImages = existingImages.length + images.length + selectedFiles.length;
 
-  const handleSubmit = async () => {
+  if (totalImages > 6) {
+    const allowedCount = 6 - existingImages.length - images.length;
+    if (allowedCount <= 0) {
+      toast.warn("Bạn chỉ có thể đăng tối đa 6 ảnh.");
+      return;
+    }
+    toast.info(`Chỉ thêm tối đa ${allowedCount} ảnh nữa.`);
+    selectedFiles.splice(allowedCount);
+  }
+
+  setImages((prev) => [...prev, ...selectedFiles]);
+
+  const newPreviews = selectedFiles.map((file) => 
+    URL.createObjectURL(file)
+);
+  setPreviewUrls((prev) => [...prev, ...newPreviews]);
+};
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!comment.trim()) {
       alert("Vui lòng nhập nhận xét.");
       return;
@@ -143,85 +157,99 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
 
       {/* Comment */}
       <textarea
-        className="w-full border border-gray-300 focus:border-gray-400 focus:outline-none rounded p-2 mb-3"
+        maxLength={200}
+        className="w-full border border-gray-300 focus:border-gray-400 focus:outline-none rounded p-2 mb-1"
         rows={4}
         placeholder="Nhận xét của bạn về sản phẩm..."
         value={comment}
         onChange={(e) => setComment(e.target.value)}
       />
+      <div className="text-right text-sm text-gray-500 mb-3">
+        {comment.length}/200 ký tự
+      </div>
+
 
       {/* Upload ảnh */}
       <div className="mb-4">
-        <label className="block font-medium mb-1">Ảnh sản phẩm</label>
-        <div
-          className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition"
-          onClick={() => document.getElementById("fileInput")?.click()}
-        >
-          <p className="text-sm text-gray-500">Click để chọn ảnh</p>
-          <input
-            id="fileInput"
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-            className="hidden"
-          />
+          <label className="block font-medium mb-1">Ảnh sản phẩm</label>
+
+          <p className="text-sm text-gray-500 mb-1">
+            Đã chọn: {existingImages.length + previewUrls.length}/6 ảnh
+          </p>
+
+          {/* Ẩn nếu đã đủ 6 ảnh */}
+          {existingImages.length + previewUrls.length < 6 && (
+            <div
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition"
+              onClick={() => document.getElementById("fileInput")?.click()}
+            >
+              <p className="text-sm text-gray-500">Click để chọn ảnh</p>
+              <input
+                id="fileInput"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+          )}
+
+          {/* Hiển thị ảnh đã upload */}
+          {existingImages.length > 0 && (
+            <div className="mt-3 flex gap-2 flex-wrap">
+              {existingImages.map((img, index) => (
+                <div key={img.public_id} className="relative w-[80px] h-[80px]">
+                  <img
+                    src={img.url}
+                    alt={`existing-${index}`}
+                    className="object-cover w-full h-full rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRemovedImagePublicIds((prev) => [...prev, img.public_id]);
+                      setExistingImages((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      );
+                    }}
+                    className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Hiển thị ảnh mới chọn */}
+          {previewUrls.length > 0 && (
+            <div className="mt-3 flex gap-2 flex-wrap">
+              {previewUrls.map((url, index) => (
+                <div key={index} className="relative w-[80px] h-[80px]">
+                  <img
+                    src={url}
+                    alt={`preview-${index}`}
+                    className="object-cover w-full h-full rounded border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImages((prev) => prev.filter((_, i) => i !== index));
+                      setPreviewUrls((prev) =>
+                        prev.filter((_, i) => i !== index)
+                      );
+                    }}
+                    className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Hiển thị ảnh đã upload (Cloudinary) */}
-        {existingImages.length > 0 && (
-          <div className="mt-3 flex gap-2 flex-wrap">
-            {existingImages.map((img, index) => (
-              <div key={img.public_id} className="relative w-[80px] h-[80px]">
-                <img
-                  src={img.url}
-                  alt={`existing-${index}`}
-                  className="object-cover w-full h-full rounded border"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRemovedImagePublicIds((prev) => [...prev, img.public_id]);
-                    setExistingImages((prev) =>
-                      prev.filter((_, i) => i !== index)
-                    );
-                  }}
-                  className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Ảnh mới chọn */}
-        {previewUrls.length > 0 && (
-          <div className="mt-3 flex gap-2 flex-wrap">
-            {previewUrls.map((url, index) => (
-              <div key={index} className="relative w-[80px] h-[80px]">
-                <img
-                  src={url}
-                  alt={`preview-${index}`}
-                  className="object-cover w-full h-full rounded border"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImages((prev) => prev.filter((_, i) => i !== index));
-                    setPreviewUrls((prev) =>
-                      prev.filter((_, i) => i !== index)
-                    );
-                  }}
-                  className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Submit button */}
       <button

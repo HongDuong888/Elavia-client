@@ -262,13 +262,19 @@ const averageRating = totalReviews
               <div className="flex items-center gap-4 py-4">
                 <div className="text-gray-500">SKU: {product.sku}</div>
                 <div className="flex items-center gap-1">
-                  <Rate
-                    disabled
-                    allowHalf
-                    defaultValue={parseFloat(averageRating)}
-                                        className="text-yellow-500 flex items-center justify-center [&_.ant-rate-star]:!text-[16px] [&_.ant-rate-star-second]:!text-[16px] [&_.ant-rate-star-half]:!text-[16px] [&_.ant-rate-star-full]:!text-[16px] [&_.ant-rate-star-half-left]:!text-[16px] [&_.ant-rate-star-half-right]:!text-[16px] [&_.ant-rate-star]:!mr-[0px]"
-                  />
-                  <div className="text-gray-500">({totalReviews} đánh giá)</div>
+                  {totalReviews > 0 ? (
+                    <>
+                      <Rate
+                        disabled
+                        allowHalf
+                        defaultValue={parseFloat(averageRating)}
+                        className="text-yellow-500 flex items-center justify-center [&_.ant-rate-star]:!text-[16px] [&_.ant-rate-star-second]:!text-[16px] [&_.ant-rate-star-half]:!text-[16px] [&_.ant-rate-star-full]:!text-[16px] [&_.ant-rate-star-half-left]:!text-[16px] [&_.ant-rate-star-half-right]:!text-[16px] [&_.ant-rate-star]:!mr-[0px]"
+                      />
+                      <div className="text-gray-500">({totalReviews} đánh giá)</div>
+                    </>
+                  ) : (
+                    <div className="text-sm italic text-gray-400">Chưa có đánh giá</div>
+                  )}
                 </div>
               </div>
               <div className="text-2xl font-[550]">
@@ -520,10 +526,9 @@ const averageRating = totalReviews
                   className={`tab-content text-[14px] leading-6 ${
                     activeTab === "chi_tiet" ? "" : "hidden"
                   }`}
-                >
-                  {product.productId.description ||
-                    "Mô tả chi tiết của sản phẩm."}
-                </div>
+                  dangerouslySetInnerHTML={{ __html: product.productId.description|| 
+                     "Mô tả chi tiết của sản phẩm." }}
+                ></div>
                 <div
                   className={`tab-content text-[14px] leading-6 ${
                     activeTab === "bao_quan" ? "" : "hidden"
@@ -534,6 +539,7 @@ const averageRating = totalReviews
               </div>
             </div>
           </div>
+          <ReviewList productVariantId={product._id} />
           {relatedVariantsData?.length > 0 && (
             <>
               <p className="text-center font-semibold py-4 text-xl sm:text-2xl md:text-3xl md:py-8 sm:py-8">
@@ -557,7 +563,7 @@ const averageRating = totalReviews
               isSlideshow
             />
           </div>
-           <ReviewList productVariantId={product._id} />
+          
           <div>
             <img
               src="/images/banner1.3.webp"
@@ -572,3 +578,4 @@ const averageRating = totalReviews
 };
 
 export default DetailProduct;
+

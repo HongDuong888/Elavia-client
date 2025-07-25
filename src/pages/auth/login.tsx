@@ -168,7 +168,9 @@ const Login = () => {
                     <input type="checkbox" className="mr-2" />
                     <p className="text-[14px]">Ghi nhớ đăng nhập</p>
                   </div>
-                  <p className="underline text-[14px] cursor-pointer hover:text-orange-600">
+                  <p 
+                    onClick={() => navigate("/forgot-password")} 
+                    className="underline text-[14px] cursor-pointer hover:text-orange-600">
                     Quên mật khẩu?
                   </p>
                 </div>
