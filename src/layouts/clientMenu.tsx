@@ -43,6 +43,18 @@ const MenuClient = () => {
     staleTime: 60 * 1000,
   });
 
+  const {
+    data: siteSettingsData,
+    isLoading: isSiteSettingsLoading,
+  } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: () => getList({ namespace: "site-settings" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const siteSettings = Array.isArray(siteSettingsData)
+    ? siteSettingsData[0]
+    : siteSettingsData;
+
   const handleLogout = () => {
     mutation.mutate();
   };
@@ -141,12 +153,13 @@ const MenuClient = () => {
                   onMouseLeave={handleMouseLeave} // Ẩn dropdown với độ trễ
                 >
                   {/* Danh mục cấp 1 */}
-                 <a
-                    href="javascript:void(0)"
-                    className="text-[12px] font-semibold text-gray-800 hover:text-red-500 transition-all duration-300 cursor-default"
+                  <button
+                    type="button"
+                    className="text-[12px] font-semibold text-gray-800 hover:text-red-500 transition-all duration-300 cursor-default bg-transparent border-none outline-none"
+                    style={{ background: "none" }}
                   >
                     {category.name.toUpperCase()}
-                  </a>
+                  </button>
 
                   {/* Dropdown danh mục cấp 2 và cấp 3 */}
                   {activeDropdown === category._id &&
@@ -219,7 +232,11 @@ const MenuClient = () => {
 
         <div className="flex justify-center items-center">
           <Link to="/">
-            <img src="/images/logo.png" alt="Logo" className="w-32 h-auto" />
+            <img
+              src={siteSettings?.logo?.url || "/images/logo.png"}
+              alt="Logo"
+              className="w-32 h-auto"
+            />
           </Link>
         </div>
 

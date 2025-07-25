@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getList } from "../api/provider";
 
 const Footer = () => {
+  // Lấy site settings động
+  const { data } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: () => getList({ namespace: "site-settings" }),
+    staleTime: 5 * 60 * 1000,
+  });
+  const siteSettings = Array.isArray(data) ? data[0] : data;
+
   // Trạng thái mở/đóng của các dropdown
   const [isOpen, setIsOpen] = useState({
     about: true,
@@ -14,6 +24,22 @@ const Footer = () => {
     setIsOpen((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // Lấy thông tin động
+  const logo = siteSettings?.logo?.url || "/images/logo.png";
+  // Lấy số điện thoại động từ footer.phone
+  const phone = siteSettings?.footer?.phone || "0353 608 533";
+  const socialLinks = siteSettings?.footer?.socialLinks || {};
+  const appLinks = siteSettings?.footer?.appLinks || {};
+
+  // Map giữa tên icon và key dữ liệu
+  const socialIconMap = [
+    { icon: "fb", key: "facebook" },
+    { icon: "gg", key: "google" },
+    { icon: "instagram", key: "instagram" },
+    { icon: "pinterest", key: "pinterest" },
+    { icon: "ytb", key: "youtube" },
+  ];
+
   return (
     <footer className="w-full px-0 mx-0">
       {/* Đường phân cách */}
@@ -25,7 +51,7 @@ const Footer = () => {
         <div className="col-span-1">
           <div className="flex justify-between items-center">
             <img
-              src="/images/logo.png"
+              src={logo}
               alt="Logo"
               className="w-20 h-auto mr-4"
             />
@@ -36,21 +62,35 @@ const Footer = () => {
               className="w-15 h-8"
             />
           </div>
-          <div className="grid grid-cols-5 py-5 items-center">
-            {["ic_fb", "ic_gg", "ic_instagram", "ic_pinterest", "ic_ytb"].map(
-              (icon) => (
+          {/* Social icons động, giữ nguyên icon, link động */}
+          <div className="grid grid-cols-5 gap-x-6 py-5 items-center">
+            {socialIconMap.map(({ icon, key }) =>
+              socialLinks[key] ? (
+                <a
+                  key={icon}
+                  href={socialLinks[key]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img
+                    src={`/svg/ic_${icon}.svg`}
+                    className="w-6 h-6 mx-auto"
+                    alt={icon}
+                  />
+                </a>
+              ) : (
                 <img
                   key={icon}
-                  src={`/svg/${icon}.svg`}
-                  className="w-6 h-6 mx-auto"
+                  src={`/svg/ic_${icon}.svg`}
+                  className="w-6 h-6 mx-auto opacity-40"
                   alt={icon}
                 />
               )
             )}
           </div>
           <div>
-            <p className="bg-black w-68 h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center lg:text-[16px] md:text-[12px] text-white font-semibold hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer transition-all duration-300">
-              HOTLINE: 0353 608 533
+            <p className="bg-black w-68 h-[50px] rounded-tl-2xl rounded-br-2xl flex items-center justify-center lg:text-[16px] md:text-[12px] text-white font-semibold hover:bg-white hover:text-black hover:border hover:border-black cursor-pointer transition-all duration-300 mt-4">
+              HOTLINE: {phone}
             </p>
           </div>
         </div>
@@ -62,9 +102,8 @@ const Footer = () => {
             >
               Giới thiệu
               <svg
-                className={`w-4 h-4 ml-2 transform transition-transform duration-300 ${
-                  isOpen.about ? "rotate-180" : ""
-                } md:hidden`}
+                className={`w-4 h-4 ml-2 transform transition-transform duration-300 ${isOpen.about ? "rotate-180" : ""
+                  } md:hidden`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -114,9 +153,8 @@ const Footer = () => {
             >
               Dịch vụ khách hàng
               <svg
-                className={`w-4 h-4 ml-2 transform transition-transform duration-300 ${
-                  isOpen.services ? "rotate-180" : ""
-                } md:hidden`}
+                className={`w-4 h-4 ml-2 transform transition-transform duration-300 ${isOpen.services ? "rotate-180" : ""
+                  } md:hidden`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -206,9 +244,8 @@ const Footer = () => {
             >
               Liên hệ
               <svg
-                className={`w-4 h-4 ml-2 transform transition-transform duration-300 ${
-                  isOpen.contact ? "rotate-180" : ""
-                } md:hidden`}
+                className={`w-4 h-4 ml-2 transform transition-transform duration-300 ${isOpen.contact ? "rotate-180" : ""
+                  } md:hidden`}
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -290,16 +327,21 @@ const Footer = () => {
           <div className="lg:text-xl md:text-[16px] font-semibold py-4">
             Download App
           </div>
-          <img
-            src="/images/appstore.png"
-            className="w-42 h-auto pb-2"
-            alt="Appstore"
-          />
-          <img
-            src="/images/googleplay.png"
-            className="w-42 h-auto pt-2"
-            alt="Google Play"
-          />
+          {/* Link động cho App Store và Google Play */}
+          <a href={appLinks.ios} target="_blank" rel="noopener noreferrer">
+            <img
+              src="/images/appstore.png"
+              className="w-42 h-auto pb-2"
+              alt="Appstore"
+            />
+          </a>
+          <a href={appLinks.android} target="_blank" rel="noopener noreferrer">
+            <img
+              src="/images/googleplay.png"
+              className="w-42 h-auto pt-2"
+              alt="Google Play"
+            />
+          </a>
         </div>
       </div>
 
