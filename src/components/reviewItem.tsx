@@ -1,12 +1,8 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Rate, Select, Empty, Spin, Pagination } from "antd";
+import { Rate, Empty, Spin } from "antd";
 import axiosInstance from "../services/axiosInstance";
 import dayjs from "dayjs";
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
-
-const { Option } = Select;
 
 interface ReviewListProps {
   productVariantId: string;
@@ -14,15 +10,12 @@ interface ReviewListProps {
   userId?: string;
 }
 
-const ReviewList: React.FC<ReviewListProps> = ({
+const ReviewItem: React.FC<ReviewListProps> = ({
   productVariantId,
   orderId,
   userId,
 }) => {
-  const [selectedStar, setSelectedStar] = useState<"all" | "hasImage" | number>("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const [expandedReviewIds, setExpandedReviewIds] = useState<string[]>([]);
-  const pageSize = 4;
 
   const { data: resData, isLoading, error } = useQuery({
     queryKey: ["reviews", productVariantId, orderId],
@@ -43,28 +36,11 @@ const ReviewList: React.FC<ReviewListProps> = ({
     enabled: !!productVariantId,
   });
 
-  const allReviews = Array.isArray(resData)
-    ? resData
-    : Array.isArray(resData?.data)
+  const allReviews = Array.isArray(resData?.data)
     ? resData.data
+    : Array.isArray(resData)
+    ? resData
     : [];
-
-  const filteredReviews =
-    selectedStar === "all"
-      ? allReviews
-      : selectedStar === "hasImage"
-      ? allReviews.filter((r: any) => Array.isArray(r.images) && r.images.length > 0)
-      : allReviews.filter((r: any) => r.rating === Number(selectedStar));
-
-  const paginatedReviews = filteredReviews.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const handleStarChange = (value: string | number) => {
-    setSelectedStar(value === "all" || value === "hasImage" ? value : Number(value));
-    setCurrentPage(1);
-  };
 
   const toggleExpand = (id: string) => {
     setExpandedReviewIds((prev) =>
@@ -123,18 +99,17 @@ const ReviewList: React.FC<ReviewListProps> = ({
           </p>
 
           {review.images?.length > 0 && (
-            <div className="flex gap-2 flex-wrap mt-2">
+            <div className="flex gap-2 flex-wrap">
               {review.images.map((img: any, idx: number) => (
-                <Zoom key={idx}>
-                  <img
-                    src={img.url}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/images/image-fallback.png";
-                    }}
-                    className="w-16 h-16 rounded object-cover border cursor-pointer hover:opacity-80 transition"
-                    alt={`review-${idx}`}
-                  />
-                </Zoom>
+                <img
+                  key={idx}
+                  src={img.url}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/images/image-fallback.png";
+                  }}
+                  className="w-16 h-16 rounded object-cover border"
+                  alt={`review-${idx}`}
+                />
               ))}
             </div>
           )}
@@ -145,58 +120,23 @@ const ReviewList: React.FC<ReviewListProps> = ({
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex justify-between items-center flex-wrap gap-2">
-        <h3 className="text-lg font-semibold text-gray-800">
-          Đánh giá sản phẩm
-        </h3>
-        <Select
-          value={selectedStar}
-          onChange={handleStarChange}
-          className="!w-44"
-        >
-          <Option value="all">Tất cả</Option>
-          <Option value="hasImage">📷 Có ảnh</Option>
-          {[5, 4, 3, 2, 1].map((star) => (
-            <Option key={star} value={star}>
-              {star} sao
-            </Option>
-          ))}
-        </Select>
-      </div>
+      <h3 className="text-lg font-semibold text-gray-800">
+        Đánh giá sản phẩm
+      </h3>
 
       {isLoading ? (
         <Spin tip="Đang tải đánh giá..." />
       ) : error ? (
         <p className="text-red-500">Lỗi khi tải đánh giá</p>
-      ) : filteredReviews.length === 0 ? (
-        <Empty description="Chưa có đánh giá nào phù hợp" />
+      ) : allReviews.length === 0 ? (
+        <Empty description="Chưa có đánh giá nào" />
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4">
-            {paginatedReviews.map((review: any) => renderReview(review))}
-          </div>
-
-          <div className="flex justify-center mt-4">
-            <Pagination
-              current={currentPage}
-              pageSize={pageSize}
-              total={filteredReviews.length}
-              onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
-              showQuickJumper={false}
-              itemRender={(page, type, originalElement) => {
-                if (type === "prev") return <a>«</a>;
-                if (type === "next") return <a>»</a>;
-                if (type === "page") return <a>{page}</a>;
-                return originalElement;
-              }}
-              locale={{ items_per_page: "" }}
-            />
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-1 gap-4">
+          {allReviews.map((review: any) => renderReview(review))}
+        </div>
       )}
     </div>
   );
 };
 
-export default ReviewList;
+export default ReviewItem;

@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import ReviewForm from "../../components/reviewForm";
 import ReviewList from "../../components/reviewList";
 import axiosInstance from "../../services/axiosInstance";
+import ReviewItem from "../../components/reviewItem";
 
 const Detail_order = () => {
   const { id } = useParams();
@@ -31,28 +32,8 @@ const Detail_order = () => {
       images: { url: string; public_id: string }[];
     };
   }>(null);
-  const { mutate: deleteReview,   isPending: isDeleting } = useMutation({
-  mutationFn: async (reviewId: string) => {
-    await axiosInstance.delete(`/reviews/${reviewId}`);
-  },
-  onSuccess: () => {
-    toast.success("Xóa đánh giá thành công");
-    queryClient.invalidateQueries({ queryKey: ["orders", id] });
-  },
-  onError: () => {
-    toast.error("Xóa đánh giá thất bại");
-  },
-});
-const handleDeleteReview = (reviewId: string) => {
-  if (!reviewId) {
-    console.error("Không tìm thấy reviewId", reviewId);
-    toast.error("Không tìm thấy ID đánh giá để xóa");
-    return;
-  }
+  
 
-
-  deleteReview(reviewId);
-};
 const { data: reviewList = [] } = useQuery({
   queryKey: ["reviews", id],
   queryFn: async () => {
@@ -78,7 +59,20 @@ const itemsWithReview = data?.items?.map((item: any) => {
   };
 });
 
+const { mutate: deleteReview,   isPending: isDeleting } = useMutation({
+  mutationFn: async (reviewId: string) => {
+    await axiosInstance.delete(`/reviews/${reviewId}`);
+  },
+  onSuccess: () => {
+    toast.success("Xóa đánh giá thành công");
+     queryClient.invalidateQueries({ queryKey: ["orders", id] }); 
+     queryClient.invalidateQueries({ queryKey: ["reviews", id] });
 
+  },
+  onError: () => {
+    toast.error("Xóa đánh giá thất bại");
+  },
+});
   if (isLoading) return <Loading />;
   if (!data) return <div className="p-10 text-center text-red-500">Không tìm thấy đơn hàng.</div>;
 
@@ -104,7 +98,16 @@ const itemsWithReview = data?.items?.map((item: any) => {
       userId: auth.user.id,
     });
   };
+const handleDeleteReview = (reviewId: string) => {
+  if (!reviewId) {
+    console.error("Không tìm thấy reviewId", reviewId);
+    toast.error("Không tìm thấy ID đánh giá để xóa");
+    return;
+  }
 
+
+  deleteReview(reviewId);
+};
   return (
     <ClientLayout>
       <article className="mt-[98px]">
@@ -135,7 +138,7 @@ const itemsWithReview = data?.items?.map((item: any) => {
             <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-semibold">
                 Chi tiết đơn hàng 
-                <span className="text-red-600">{data.orderId}</span>
+                <span className="text-red-600 ml-2">#{data.orderId}</span>
               </h2>
               <button className="text-sm text-red-500 hover:underline">
                 {data.status}
@@ -154,7 +157,7 @@ const itemsWithReview = data?.items?.map((item: any) => {
                               : "https://via.placeholder.com/150x215?text=No+Image"
                           }
                         alt={item.productName}
-                        className="w-[150px] h-[215px] object-cover"
+                        className="w-[100px] h-[165px] object-cover"
                       />
                       <div className="flex flex-col justify-between">
                         <div key={index}>
@@ -173,59 +176,60 @@ const itemsWithReview = data?.items?.map((item: any) => {
                           <p className="text-sm text-gray-600 py-0.5">Số lượng: {item.quantity}</p>
                           <p className="text-sm text-gray-600 py-0.5">SKU: {item.productVariantId?.sku || item.sku || "Không có"}</p>
                         </div>
-                        <button
+                        <div className="flex gap-2">
+                           <button
                           onClick={() => handleBuyAgain(item)}
                           className="w-fit mt-2 px-4 py-1 border border-black rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-black hover:text-white transition"
                         >
                           MUA LẠI
                         </button>
-                        {data.status.toLowerCase() === "giao hàng thành công" && (
-                          <>
-                            {!item.reviewed ? (
-                              <button
-                                onClick={() =>
-                                  setShowReviewForm({
-                                    orderId: data._id,
-                                    productVariantId: item.productVariantId._id,
-                                  })
-                                }
-                                className="w-fit mt-2 px-4 py-1 border border-black bg-black text-white rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-white hover:text-black transition"
-                              >
-                                Đánh giá
-                              </button>
-                            ) : (
-                              <div className="flex gap-2 mt-2">
+                       {data.status.toLowerCase() === "giao hàng thành công" && (
+                            <>
+                              {!item.review ? (
                                 <button
-                                  onClick={() => handleViewReview(item.productVariantId._id)}
-                                  className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white rounded-md hover:bg-white hover:text-black transition"
-                                >
-                                  XEM ĐÁNH GIÁ
-                                </button>
-                               <button
-                                  onClick={() => {
-                                    console.log("reviewData:", item.reviewData);
+                                  onClick={() =>
                                     setShowReviewForm({
                                       orderId: data._id,
                                       productVariantId: item.productVariantId._id,
-                                      mode: "edit",
-                                      initialData: item.reviewData,
-                                    });
-                                  }}
-                                 className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white rounded-md hover:bg-white hover:text-black transition"
+                                    })
+                                  }
+                                  className="w-fit mt-2 px-4 py-1 border border-black bg-black text-white rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-white hover:text-black transition"
                                 >
-                                  SỬA
+                                  Đánh giá
                                 </button>
-                                <button
-                                  className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
-                                  onClick={() => handleDeleteReview(item.review?._id)}
-                                  disabled={isDeleting}
-                                >
-                                  {isDeleting ? "Đang xóa..." : "XÓA"}
-                                </button>
-                              </div>
-                            )}
-                          </>
-                        )}
+                              ) : (
+                                <div className="flex gap-2 mt-2">
+                                  <button
+                                    onClick={() => handleViewReview(item.productVariantId._id)}
+                                    className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
+                                  >
+                                    XEM ĐÁNH GIÁ
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      setShowReviewForm({
+                                        orderId: data._id,
+                                        productVariantId: item.productVariantId._id,
+                                        mode: "edit",
+                                        initialData: item.review,
+                                      })
+                                    }
+                                    className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
+                                  >
+                                    SỬA
+                                  </button>
+                                  <button
+                                    className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
+                                    onClick={() => handleDeleteReview(item.review?._id)}
+                                    disabled={isDeleting}
+                                  >
+                                    {isDeleting ? "Đang xóa..." : "XÓA"}
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <hr className="mt-2 w-[600px]" />
@@ -330,7 +334,7 @@ const itemsWithReview = data?.items?.map((item: any) => {
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-xl w-full max-w-xl">
-            <ReviewList productVariantId={selectedVariantId} orderId={data._id} userId={auth.user?.id} />
+            <ReviewItem productVariantId={selectedVariantId} orderId={data._id} userId={auth.user?.id} />
             <div className="text-right mt-4">
               <button onClick={handleClose} className="px-4 py-2 bg-gray-300 rounded">Đóng</button>
             </div>

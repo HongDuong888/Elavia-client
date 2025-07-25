@@ -11,7 +11,7 @@ const orderSuccess = () => {
   const { auth } = useAuth();
   const userEmail = auth?.user?.email;
   const [searchParams] = useSearchParams();
-  const orderId = searchParams.get("orderId");
+  const orderId = searchParams.get("orderId") || searchParams.get("apptransid");
   console.log("userEmail:", userEmail);
   console.log("orderId:", orderId);
 

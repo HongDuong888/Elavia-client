@@ -24,6 +24,8 @@ import OrderFollow from "./pages/client/orderFollow";
 import LoginHistory from "./pages/client/loginHistory";
 import SearchProduct from "./pages/client/searchProduct";
 import CategoryProducts from "./pages/client/categoryProducts";
+import ForgotPasswordWithCaptcha from "./pages/client/forgotPassWord";
+import ResetPassword from "./pages/client/resetPassWord";
 import NewArrivalProducts from "./pages/client/newArrivalProducts";
 
 function App() {
@@ -38,6 +40,8 @@ function App() {
     { path: "/", element: <Home /> },
     { path: "/login", element: <Login /> },
     { path: "/register", element: <Register /> },
+    { path: "/forgot-password", element: <ForgotPasswordWithCaptcha /> },
+    { path: "/reset-password", element: <ResetPassword /> },
     { path: "/search-product", element: <SearchProduct /> },
     { path: "/category/:categoryId", element: <CategoryProducts /> },
     { path: "/verify-account", element: <VerifyAccount /> },
@@ -67,7 +71,7 @@ function App() {
       path: "/viewed-products",
       element: <CheckLogin element={<ViewedProducts />} />,
     },
-    { path: "/ordersuccess", element: <Ordersuccess /> },
+    { path: "/ordersuccess/:orderId", element: <Ordersuccess /> },
     { path: "/order-follow/:id", element: <OrderFollow /> },
     { path: "/new-arrival/:gender", element: <NewArrivalProducts /> },
     { path: "/spring-summer-collection/:gender", element: <NewArrivalProducts /> },
