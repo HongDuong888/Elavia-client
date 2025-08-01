@@ -30,6 +30,7 @@
     "react-toastify": "^11.0.5",
     "simple-image-magnifier": "^1.1.4",
     "slick-carousel": "^1.8.1",
+    "sweetalert2": "^11.22.2",
     "swiper": "^11.2.5",
     "zod": "^3.24.2"
   },
