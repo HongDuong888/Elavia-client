@@ -5,28 +5,32 @@ import { useState } from "react";
 import Loading from "../../components/loading";
 import MenuInfo from "../../components/menuInfo";
 import ClientLayout from "../../layouts/clientLayout";
-
+import axiosInstance from "../../services/axiosInstance";
+import { ref } from "process";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 const Orders = () => {
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
   });
   const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const userId = localStorage.getItem("user_id");
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["orders", pagination.current, pagination.pageSize, statusFilter],
-    queryFn: async () => {
-      const params = {
-        namespace: `orders?_page=${pagination.current}&_limit=${pagination.pageSize}`,
-      };
-      if (statusFilter !== "Tất cả") {
-        params.namespace += `&status=${encodeURIComponent(statusFilter)}`;
-      }
-      const response = await getList(params);
-      console.log("API Response:", response); // Debug
-      return response;
-    },
-  });
+const { data, isLoading, error, refetch } = useQuery({
+  queryKey: ["orders", pagination.current, pagination.pageSize, statusFilter, userId],
+  queryFn: async () => {
+    let url = `orders?_page=${pagination.current}&_limit=${pagination.pageSize}`;
+    if (statusFilter !== "Tất cả") {
+      url += `&status=${encodeURIComponent(statusFilter)}`;
+    }
+    if (userId) {
+      url += `&_userId=${userId}`;
+    }
+    const response = await getList({ namespace: url });
+    return response;
+  },
+});
 
   const tableData = data?.data || [];
   const total = data?.total || 0;
@@ -89,6 +93,32 @@ const Orders = () => {
     return pageNumbers;
   };
 
+ const handleCancelOrder = async (orderId: string) => {
+  const result = await Swal.fire({
+    title: "Xác nhận huỷ?",
+    text: "Bạn có chắc muốn huỷ đơn hàng này?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Huỷ đơn",
+    cancelButtonText: "Không",
+    confirmButtonColor: "black",
+    cancelButtonColor: "#6c757d",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const res = await axiosInstance.post("orders/cancel", {
+      orderId,
+      cancelBy: "buyer",
+    });
+
+    toast.success(res.data.message || "Huỷ đơn hàng thành công");
+    refetch();
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Huỷ đơn hàng thất bại");
+  }
+};
   return (
     <ClientLayout>
       <article className="mt-[98px]">
@@ -234,6 +264,14 @@ const Orders = () => {
                                 >
                                   Thanh toán
                                 </a>
+                              )}
+                              {["Chờ xác nhận", "Đã thanh toán", "Chờ thanh toán", "Đã xác nhận"].includes(order.status) && (
+                                <button
+                                  onClick={() => handleCancelOrder(order.orderId)}
+                                  className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                                >
+                                  Huỷ đơn
+                                </button>
                               )}
                           </div>
                         </td>
