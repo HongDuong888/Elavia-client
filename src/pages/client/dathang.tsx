@@ -260,7 +260,7 @@ const Dathang = () => {
 
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
           toast.success("Đặt hàng thành công!");
-          navigate(`/ordersuccess?orderId=${payload.orderId}`);
+          navigate(`/ordersuccess/${payload.orderId}?orderId=${payload.orderId}`);
         } catch (error: any) {
           throw new Error(
             error.response?.data?.message || "Thanh toán thất bại"
@@ -351,7 +351,7 @@ const Dathang = () => {
           );
 
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
-          window.open(momoResponse.data.payUrl, "_blank");
+          window.location.href = momoResponse.data.payUrl;
         } catch (error: any) {
           console.error("Lỗi thanh toán MoMo:", error);
           const errorMessage =
@@ -438,7 +438,7 @@ const Dathang = () => {
           );
 
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
-          window.open(zaloResponse.data.order_url, "_blank");
+          window.location.href = zaloResponse.data.order_url;
         } catch (error) {
           console.error("Lỗi ZaloPay:", error);
           throw error;
