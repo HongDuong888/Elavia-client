@@ -82,7 +82,8 @@ const Cart = () => {
     productVariantId: string,
     size: string,
     newQuantity: number,
-    stock: number
+    stock: number,
+    currentQuantity: number
   ) => {
     if (!auth.user?.id) {
       toast.error("Bạn cần đăng nhập để thực hiện thao tác này");
@@ -92,7 +93,7 @@ const Cart = () => {
       toast.error("Số lượng phải lớn hơn 0");
       return;
     }
-    if (newQuantity > stock) {
+    if (newQuantity > currentQuantity && newQuantity > stock) {
       toast.error("Số lượng vượt quá tồn kho");
       return;
     }
@@ -242,7 +243,8 @@ const Cart = () => {
                                       item?.productVariantId?._id || "",
                                       item.size,
                                       item.quantity - 1,
-                                      stock
+                                      stock,
+                                      item.quantity
                                     )
                                   }
                                   disabled={item.quantity <= 1}
@@ -268,7 +270,8 @@ const Cart = () => {
                                       item?.productVariantId?._id || "",
                                       item.size,
                                       item.quantity + 1,
-                                      stock
+                                      stock,
+                                      item.quantity
                                     )
                                   }
                                   disabled={item.quantity >= stock}
@@ -420,7 +423,8 @@ const Cart = () => {
                                     item?.productVariantId?._id || "",
                                     item.size,
                                     item.quantity - 1,
-                                    stock
+                                    stock,
+                                    item.quantity
                                   )
                                 }
                                 disabled={item.quantity <= 1}
@@ -446,7 +450,8 @@ const Cart = () => {
                                     item?.productVariantId?._id || "",
                                     item.size,
                                     item.quantity + 1,
-                                    stock
+                                    stock,
+                                    item.quantity
                                   )
                                 }
                                 disabled={item.quantity >= stock}

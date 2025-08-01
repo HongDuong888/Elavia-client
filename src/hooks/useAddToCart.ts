@@ -19,8 +19,10 @@ export const useAddToCart = (onSuccessCallback?: () => void) => {
       queryClient.invalidateQueries({ queryKey: ["cartQuantity"] });
       if (onSuccessCallback) onSuccessCallback();
     },
-    onError: () => {
-      toast.error("Không thể thêm vào giỏ hàng!");
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message || "Thêm vào giỏ hàng thất bại";
+      toast.error(message);
     },
   });
 };
