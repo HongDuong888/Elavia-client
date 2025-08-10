@@ -1,3 +1,10 @@
+// Kiểu đơn hàng chưa thanh toán
+interface Order {
+  _id: string;
+  orderId: string;
+  finalAmount: number;
+  paymentStatus: string;
+}
 import {
   createContext,
   ReactNode,
@@ -27,6 +34,8 @@ interface AuthState {
 interface AuthContextType {
   auth: AuthState;
   setAuth: Dispatch<SetStateAction<AuthState>>;
+  pendingOrders: Order[];
+  setPendingOrders: Dispatch<SetStateAction<Order[]>>;
 }
 
 // Tạo context
@@ -59,6 +68,7 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
       role: "",
     },
   });
+  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
 
   // Gọi API user info nếu có token
   const { data, isLoading, error } = useQuery({
@@ -104,6 +114,19 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
           role: data.role || "",
         },
       });
+
+      // Gọi API đơn hàng chưa thanh toán sau khi xác thực thành công
+      import("../services/axiosInstance").then(({ default: axiosInstance }) => {
+        axiosInstance
+          .get("/orders/get-pending-payment-orders")
+          .then((res) => {
+            const orders = res.data?.data || [];
+            setPendingOrders(orders);
+          })
+          .catch((err) => {
+            setPendingOrders([]);
+          });
+      });
     } else if (error) {
       const axiosError = error as AxiosError;
       if (axiosError.response?.status === 401) {
@@ -132,7 +155,9 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
 
   // Trả về context cho toàn bộ app
   return (
-    <AuthContext.Provider value={{ auth, setAuth }}>
+    <AuthContext.Provider
+      value={{ auth, setAuth, pendingOrders, setPendingOrders }}
+    >
       {children}
     </AuthContext.Provider>
   );

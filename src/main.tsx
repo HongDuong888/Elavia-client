@@ -11,11 +11,32 @@ import "react-toastify/dist/ReactToastify.css";
 import { AuthWrapper } from "./context/auth.context.tsx";
 import ScrollToTop from "./components/scrollToTop.tsx";
 import ChatBox from "./components/ChatBox.tsx";
+import PendingPaymentOrdersBox from "./components/PendingPaymentOrdersBox";
+import { useContext } from "react";
+import { AuthContext } from "./context/auth.context";
 
 // Tạo QueryClient instance
 const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
+
+function MainRoot() {
+  const { pendingOrders } = useContext(AuthContext) ?? {};
+  return (
+    <>
+      <App />
+      <ChatBox />
+      <PendingPaymentOrdersBox orders={pendingOrders || []} />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={2000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+      />
+    </>
+  );
+}
 
 root.render(
   <React.StrictMode>
@@ -24,15 +45,7 @@ root.render(
         <BrowserRouter>
           <HelmetProvider>
             <ScrollToTop />
-            <App />
-            <ChatBox />
-            <ToastContainer
-              position="bottom-right"
-              autoClose={2000}
-              hideProgressBar={false}
-              closeOnClick
-              pauseOnHover
-            />
+            <MainRoot />
           </HelmetProvider>
         </BrowserRouter>
       </AuthWrapper>

@@ -380,7 +380,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                         item.stock === 0
                           ? "line-through cursor-not-allowed opacity-50 bg-gray-100"
                           : "cursor-pointer hover:bg-gray-100"
-                      } ${selectedSize === item.size ? "bg-gray-200" : ""}`}
+                      } ${selectedSize === item.size ? "bg-gray-400" : ""}`}
                       onClick={() =>
                         item.stock > 0 && setSelectedSize(String(item.size))
                       }
