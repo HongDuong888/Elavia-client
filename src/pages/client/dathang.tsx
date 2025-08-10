@@ -17,6 +17,7 @@ const Dathang = () => {
   const queryClient = useQueryClient();
   const { auth } = useAuth();
   const [showProducts, setShowProducts] = useState(false);
+  const [isPending, setisPending] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [isFetchingShippingFee, setIsFetchingShippingFee] = useState(false);
   const [voucher, setVoucher] = useState("");
@@ -25,6 +26,7 @@ const Dathang = () => {
   );
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
+
   interface Address {
     _id?: string;
     receiver_name?: string;
@@ -35,9 +37,12 @@ const Dathang = () => {
     ward?: any;
     type?: string;
   }
+
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [shippingFee, setShippingFee] = useState(0);
-  const [lastAddedAddressId, setLastAddedAddressId] = useState<string | null>(null);
+  const [lastAddedAddressId, setLastAddedAddressId] = useState<string | null>(
+    null
+  );
 
   const {
     data: cartItems,
@@ -48,6 +53,7 @@ const Dathang = () => {
     queryFn: async () => getList({ namespace: `cart` }),
     staleTime: 60 * 1000,
   });
+
   const {
     data: userData,
     isLoading: userLoading,
@@ -58,6 +64,7 @@ const Dathang = () => {
       getById({ namespace: `auth/shipping-address`, id: auth.user.id }),
     staleTime: 60 * 1000,
   });
+
   const {
     data: myInfoData,
     isLoading: isMyInfoLoading,
@@ -135,19 +142,24 @@ const Dathang = () => {
     return sum + item.quantity;
   }, 0);
 
+  // Hàm helper để lấy giá theo size
+  const getPriceForSize = (item: ICartItem) => {
+    if (!item.productVariantId?.sizes || !item.size) return 0;
+    const sizeInfo = item.productVariantId.sizes.find(
+      (s: any) => s.size === item.size
+    );
+    return sizeInfo?.price || 0;
+  };
+
   const totalPrice = validItems.reduce((sum, item) => {
-    if (
-      !item?.productVariantId?.price ||
-      typeof item.productVariantId.price !== "number" ||
-      !item.quantity
-    )
-      return sum;
-    return sum + item.productVariantId.price * item.quantity;
+    const price = getPriceForSize(item);
+    if (!price || !item.quantity) return sum;
+    return sum + price * item.quantity;
   }, 0);
-  console.log("✅ totalPrice:", totalPrice);
 
   const cleanLocationName = (name: string = "") =>
     name.replace(/^(Tỉnh|Thành phố)\s+/g, "").trim();
+
   useEffect(() => {
     const fetchShippingFee = async () => {
       if (
@@ -169,21 +181,19 @@ const Dathang = () => {
         );
 
         const totalPrice = validItems.reduce((sum, item) => {
-          if (
-            !item?.productVariantId?.price ||
-            typeof item.productVariantId.price !== "number" ||
-            !item.quantity
-          )
-            return sum;
-          return sum + item.productVariantId.price * item.quantity;
+          const price = getPriceForSize(item);
+          if (!price || !item.quantity) return sum;
+          return sum + price * item.quantity;
         }, 0);
 
         const totalWeight = validItems.reduce((sum, item) => {
           return sum + (item.quantity || 0) * 300;
         }, 0);
+
         const totalHeight = validItems.reduce((sum, item) => {
           return sum + (item.quantity || 0) * 4;
         }, 0);
+
         try {
           setIsFetchingShippingFee(true);
           const res = await axiosInstance.post("/cart/fee", {
@@ -207,13 +217,26 @@ const Dathang = () => {
     };
 
     fetchShippingFee();
-  }, [currentAddress, items]); // 👈 chỉ theo dõi `items`, không theo dõi các biến dẫn đến loop
+  }, [currentAddress, items]);
+
+  // Hàm helper để tạo items payload với version
+  const createItemsPayload = (validItems: ICartItem[]) => {
+    return validItems.map((item) => ({
+      productVariantId: item.productVariantId._id,
+      productName: item.productVariantId.productId?.name || "Unnamed Product",
+      price: getPriceForSize(item),
+      quantity: item.quantity,
+      size: item.size,
+      version: (item.productVariantId as any).version || 0, // Thêm version từ variant
+    }));
+  };
 
   const handlePayment = async () => {
     if (!auth.user.id) {
       toast.error("Bạn cần đăng nhập để thực hiện thanh toán");
       return;
     }
+
     const currentAddress = selectedAddress || userData[0];
     const addressStr =
       currentAddress.address +
@@ -226,18 +249,10 @@ const Dathang = () => {
 
     try {
       if (paymentMethod === "cod") {
-        console.log("userData[0].cityName:", currentAddress.city?.name);
-
+        setisPending(true);
         const payload = {
           orderId: "COD_" + new Date().getTime(),
-          items: validItems.map((item) => ({
-            productVariantId: item.productVariantId._id,
-            productName:
-              item.productVariantId.productId?.name || "Unnamed Product",
-            price: item.productVariantId.price,
-            quantity: item.quantity,
-            size: item.size,
-          })),
+          items: createItemsPayload(validItems), // Sử dụng helper function
           totalPrice: totalPrice || 0,
           receiver: {
             name: currentAddress.receiver_name,
@@ -259,8 +274,11 @@ const Dathang = () => {
           );
 
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
+          setisPending(false);
           toast.success("Đặt hàng thành công!");
-          navigate(`/ordersuccess/${payload.orderId}?orderId=${payload.orderId}`);
+          navigate(
+            `/ordersuccess/${payload.orderId}?orderId=${payload.orderId}`
+          );
         } catch (error: any) {
           throw new Error(
             error.response?.data?.message || "Thanh toán thất bại"
@@ -271,18 +289,13 @@ const Dathang = () => {
           toast.error("Số tiền thanh toán phải từ 1.000đ đến 50.000.000đ");
           return;
         }
+
+        setisPending(true);
         const orderId = "MoMo_" + new Date().getTime();
-        // Tạo payload cho đơn hàng MoMo
+
         const payload = {
           orderId,
-          items: validItems.map((item) => ({
-            productVariantId: item.productVariantId._id,
-            productName:
-              item.productVariantId.productId?.name || "Unnamed Product",
-            price: item.productVariantId.price,
-            quantity: item.quantity,
-            size: item.size,
-          })),
+          items: createItemsPayload(validItems), // Sử dụng helper function
           receiver: {
             name: currentAddress.receiver_name,
             cityName: currentAddress.city?.name || "",
@@ -305,14 +318,7 @@ const Dathang = () => {
         try {
           const momoPayload = {
             orderId: payload.orderId,
-            items: validItems.map((item) => ({
-              productVariantId: item.productVariantId._id,
-              productName:
-                item.productVariantId.productId?.name || "Unnamed Product",
-              price: item.productVariantId.price,
-              quantity: item.quantity,
-              size: item.size,
-            })),
+            items: createItemsPayload(validItems), // Sử dụng helper function
             totalPrice: payload.totalPrice,
             receiver: {
               name: payload.receiver.name,
@@ -344,6 +350,7 @@ const Dathang = () => {
             console.error("Lỗi MoMo:", momoResponse.data);
             throw new Error(errorMessage);
           }
+
           payload.paymentUrl = momoResponse.data.payUrl;
           await axiosInstance.post(
             `${import.meta.env.VITE_API_URL}/orders`,
@@ -351,6 +358,7 @@ const Dathang = () => {
           );
 
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
+          setisPending(false);
           window.location.href = momoResponse.data.payUrl;
         } catch (error: any) {
           console.error("Lỗi thanh toán MoMo:", error);
@@ -361,8 +369,10 @@ const Dathang = () => {
           toast.error(errorMessage);
         }
       } else if (paymentMethod === "zalopay") {
+        setisPending(true);
         const transID = Math.floor(Math.random() * 1000000);
         const orderId = `${moment().format("YYMMDD")}_${transID}`;
+
         const payload = {
           orderId: orderId,
           receiver: {
@@ -374,14 +384,7 @@ const Dathang = () => {
             address: currentAddress.address || "",
             type: currentAddress.type || "home",
           },
-          items: validItems.map((item) => ({
-            productVariantId: item.productVariantId._id,
-            productName:
-              item.productVariantId.productId?.name || "Unnamed Product",
-            price: item.productVariantId.price,
-            quantity: item.quantity,
-            size: item.size,
-          })),
+          items: createItemsPayload(validItems), // Sử dụng helper function
           totalPrice: totalPrice || 0,
           paymentMethod: "zalopay",
           orderInfo: "Thanh toán qua ZaloPay",
@@ -390,6 +393,7 @@ const Dathang = () => {
           paymentUrl: "",
           voucherCode: voucher || null,
         };
+
         const zaloPayload = {
           orderId: payload.orderId,
           receiver: {
@@ -401,18 +405,12 @@ const Dathang = () => {
             address: payload.receiver.address,
             type: payload.receiver.type,
           },
-          items: validItems.map((item) => ({
-            productVariantId: item.productVariantId._id,
-            productName:
-              item.productVariantId.productId?.name || "Unnamed Product",
-            price: item.productVariantId.price,
-            quantity: item.quantity,
-            size: item.size,
-          })),
+          items: createItemsPayload(validItems), // Sử dụng helper function
           totalPrice: totalPrice,
           voucherCode: voucher || null,
           orderInfo: payload.orderInfo,
         };
+
         console.log("ZaloPay Payment Request:", zaloPayload);
 
         try {
@@ -438,6 +436,7 @@ const Dathang = () => {
           );
 
           await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
+          setisPending(false);
           window.location.href = zaloResponse.data.order_url;
         } catch (error) {
           console.error("Lỗi ZaloPay:", error);
@@ -449,10 +448,12 @@ const Dathang = () => {
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Có lỗi xảy ra khi thanh toán MoMo"
+          "Có lỗi xảy ra khi thanh toán"
       );
+      setisPending(false);
     }
   };
+
   const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedVoucherId, setAppliedVoucherId] = useState("");
 
@@ -619,95 +620,95 @@ const Dathang = () => {
                       </thead>
                       <tbody>
                         {validItems.length > 0 ? (
-                          validItems.map((item: ICartItem, index: number) => (
-                            <tr
-                              key={item._id}
-                              className={`border-b hover:bg-gray-50 ${
-                                index % 2 === 1 ? "bg-gray-100" : ""
-                              }`}
-                            >
-                              <td className="pr-4 py-2 text-sm text-gray-700">
-                                <div className="flex items-center gap-4">
-                                  <Link
-                                    to={`/products/${encodeURIComponent(
-                                      item?.productVariantId?._id || ""
-                                    )}`}
-                                    className="group relative block"
-                                  >
-                                    <img
-                                      src={
-                                        item?.productVariantId?.images?.main
-                                          ?.url || "/fallback.jpg"
-                                      }
-                                      alt={
-                                        item?.productVariantId?.productId
-                                          ?.name || "Product"
-                                      }
-                                      className="w-18 h-[100px] object-cover rounded transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
-                                      onError={(e) =>
-                                        (e.currentTarget.src = "/fallback.jpg")
-                                      }
-                                    />
-                                    <img
-                                      src={
-                                        item?.productVariantId?.images?.hover
-                                          ?.url || "/fallback.jpg"
-                                      }
-                                      alt={
-                                        item?.productVariantId?.productId
-                                          ?.name || "Product"
-                                      }
-                                      className="w-18 h-[100px] object-cover rounded absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
-                                      onError={(e) =>
-                                        (e.currentTarget.src = "/fallback.jpg")
-                                      }
-                                    />
-                                  </Link>
-                                  <div>
+                          validItems.map((item: ICartItem, index: number) => {
+                            const itemPrice = getPriceForSize(item);
+                            return (
+                              <tr
+                                key={item._id}
+                                className={`border-b hover:bg-gray-50 ${
+                                  index % 2 === 1 ? "bg-gray-100" : ""
+                                }`}
+                              >
+                                <td className="pr-4 py-2 text-sm text-gray-700">
+                                  <div className="flex items-center gap-4">
                                     <Link
                                       to={`/products/${encodeURIComponent(
                                         item?.productVariantId?._id || ""
                                       )}`}
-                                      className="hover:text-orange-600 transition-all duration-300 font-medium"
+                                      className="group relative block"
                                     >
-                                      {item?.productVariantId?.productId
-                                        ?.name || "Unnamed Product"}
+                                      <img
+                                        src={
+                                          item?.productVariantId?.images?.main
+                                            ?.url || "/fallback.jpg"
+                                        }
+                                        alt={
+                                          item?.productVariantId?.productId
+                                            ?.name || "Product"
+                                        }
+                                        className="w-18 h-[100px] object-cover rounded transition-opacity duration-300 ease-in-out opacity-100 group-hover:opacity-0"
+                                        onError={(e) =>
+                                          (e.currentTarget.src =
+                                            "/fallback.jpg")
+                                        }
+                                      />
+                                      <img
+                                        src={
+                                          item?.productVariantId?.images?.hover
+                                            ?.url || "/fallback.jpg"
+                                        }
+                                        alt={
+                                          item?.productVariantId?.productId
+                                            ?.name || "Product"
+                                        }
+                                        className="w-18 h-[100px] object-cover rounded absolute top-0 left-0 transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100"
+                                        onError={(e) =>
+                                          (e.currentTarget.src =
+                                            "/fallback.jpg")
+                                        }
+                                      />
                                     </Link>
-                                    {/* Màu sắc ngay dưới tên sản phẩm */}
-                                    <div className="text-base text-gray-600 mt-1">
-                                      Màu sắc:{" "}
-                                      {item.productVariantId?.color
-                                        ?.colorName || "Không có"}
+                                    <div>
+                                      <Link
+                                        to={`/products/${encodeURIComponent(
+                                          item?.productVariantId?._id || ""
+                                        )}`}
+                                        className="hover:text-orange-600 transition-all duration-300 font-medium"
+                                      >
+                                        {item?.productVariantId?.productId
+                                          ?.name || "Unnamed Product"}
+                                      </Link>
+                                      <div className="text-base text-gray-600 mt-1">
+                                        Màu sắc:{" "}
+                                        {item.productVariantId?.color
+                                          ?.colorName || "Không có"}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              </td>
-                              <td className="pr-4 py-2 text-sm text-gray-700">
-                                <div
-                                  id={`quantityDisplay-${item._id}`}
-                                  className="flex items-center justify-center text-center text-sm border border-gray-300 w-12 h-8 z-10 rounded-tl-[20px] rounded-br-[20px]"
-                                >
-                                  {item.quantity}
-                                </div>
-                              </td>
-                              <td className="pr-4 py-2 text-sm text-gray-700">
-                                {item.size}
-                              </td>
-                              <td className="pr-4 py-2 text-sm text-gray-700">
-                                {item?.productVariantId?.price.toLocaleString(
-                                  "vi-VN"
-                                )}{" "}
-                                đ
-                              </td>
-                              <td className="pr-4 py-2 text-sm text-gray-700">
-                                {(
-                                  (item?.productVariantId?.price || 0) *
-                                  (item?.quantity || 0)
-                                ).toLocaleString("vi-VN")}{" "}
-                                đ
-                              </td>
-                            </tr>
-                          ))
+                                </td>
+                                <td className="pr-4 py-2 text-sm text-gray-700">
+                                  <div
+                                    id={`quantityDisplay-${item._id}`}
+                                    className="flex items-center justify-center text-center text-sm border border-gray-300 w-12 h-8 z-10 rounded-tl-[20px] rounded-br-[20px]"
+                                  >
+                                    {item.quantity}
+                                  </div>
+                                </td>
+                                <td className="pr-4 py-2 text-sm text-gray-700">
+                                  {item.size}
+                                </td>
+                                <td className="pr-4 py-2 text-sm text-gray-700">
+                                  {itemPrice.toLocaleString("vi-VN")} đ
+                                </td>
+                                <td className="pr-4 py-2 text-sm text-gray-700">
+                                  {(
+                                    itemPrice * (item?.quantity || 0)
+                                  ).toLocaleString("vi-VN")}{" "}
+                                  đ
+                                </td>
+                              </tr>
+                            );
+                          })
                         ) : (
                           <tr>
                             <td
@@ -826,6 +827,8 @@ const Dathang = () => {
                       ? "ĐANG TÍNH PHÍ..."
                       : validItems.length === 0
                       ? "GIỎ HÀNG TRỐNG"
+                      : isPending
+                      ? "ĐANG XỬ LÝ..."
                       : "HOÀN THÀNH"}
                   </button>
                 </div>
@@ -839,7 +842,9 @@ const Dathang = () => {
           defaultAddressId={userData[0]?._id || null}
           onClose={() => setShowAddModal(false)}
           onSuccess={(newAddressId?: string) => {
-            queryClient.invalidateQueries({ queryKey: ["users", auth.user.id] });
+            queryClient.invalidateQueries({
+              queryKey: ["users", auth.user.id],
+            });
             queryClient.invalidateQueries({ queryKey: ["myInfo"] });
             if (newAddressId) setLastAddedAddressId(newAddressId);
           }}

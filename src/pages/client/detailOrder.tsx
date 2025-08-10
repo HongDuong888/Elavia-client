@@ -32,49 +32,63 @@ const Detail_order = () => {
       images: { url: string; public_id: string }[];
     };
   }>(null);
-  
 
-const { data: reviewList = [] } = useQuery({
-  queryKey: ["reviews", id],
-  queryFn: async () => {
-    const res = await axiosInstance.get(`/reviews?orderId=${id}`);
-    return res.data;
-  },
-});
-const { data, isLoading } = useQuery({
+  const { data: reviewList = [] } = useQuery({
+    queryKey: ["reviews", id],
+    queryFn: async () => {
+      const res = await axiosInstance.get(`/reviews?orderId=${id}`);
+      return res.data;
+    },
+  });
+  const { data, isLoading } = useQuery({
     queryKey: ["orders", id],
     queryFn: () => getById({ namespace: "orders", id: id }),
   });
 
-const itemsWithReview = data?.items?.map((item: any) => {
-  const review = reviewList.find(
-    (r: any) =>
-      r.productVariantId === item.productVariantId._id &&
-      r.orderId === data._id
-  );
+  const itemsWithReview = data?.items?.map((item: any) => {
+    const review = reviewList.find(
+      (r: any) =>
+        r.productVariantId === item.productVariantId && r.orderId === data._id
+    );
+    const productInfo = item.productInfo || {};
+    const productName =
+      productInfo.product?.name || item.productName || "Không có tên";
+    let price = item.price;
+    if (productInfo.sizes && item.size) {
+      const sizeObj = productInfo.sizes.find((s: any) => s.size === item.size);
+      if (sizeObj && sizeObj.price) {
+        price = sizeObj.price;
+      }
+    }
+    return {
+      ...item,
+      review,
+      productInfo,
+      productName,
+      price,
+    };
+  });
 
-  return {
-    ...item,
-    review,
-  };
-});
-
-const { mutate: deleteReview,   isPending: isDeleting } = useMutation({
-  mutationFn: async (reviewId: string) => {
-    await axiosInstance.delete(`/reviews/${reviewId}`);
-  },
-  onSuccess: () => {
-    toast.success("Xóa đánh giá thành công");
-     queryClient.invalidateQueries({ queryKey: ["orders", id] }); 
-     queryClient.invalidateQueries({ queryKey: ["reviews", id] });
-
-  },
-  onError: () => {
-    toast.error("Xóa đánh giá thất bại");
-  },
-});
+  const { mutate: deleteReview, isPending: isDeleting } = useMutation({
+    mutationFn: async (reviewId: string) => {
+      await axiosInstance.delete(`/reviews/${reviewId}`);
+    },
+    onSuccess: () => {
+      toast.success("Xóa đánh giá thành công");
+      queryClient.invalidateQueries({ queryKey: ["orders", id] });
+      queryClient.invalidateQueries({ queryKey: ["reviews", id] });
+    },
+    onError: () => {
+      toast.error("Xóa đánh giá thất bại");
+    },
+  });
   if (isLoading) return <Loading />;
-  if (!data) return <div className="p-10 text-center text-red-500">Không tìm thấy đơn hàng.</div>;
+  if (!data)
+    return (
+      <div className="p-10 text-center text-red-500">
+        Không tìm thấy đơn hàng.
+      </div>
+    );
 
   const handleViewReview = (variantId: string) => {
     setSelectedVariantId(variantId);
@@ -98,22 +112,21 @@ const { mutate: deleteReview,   isPending: isDeleting } = useMutation({
       userId: auth.user.id,
     });
   };
-const handleDeleteReview = (reviewId: string) => {
-  if (!reviewId) {
-    console.error("Không tìm thấy reviewId", reviewId);
-    toast.error("Không tìm thấy ID đánh giá để xóa");
-    return;
-  }
+  const handleDeleteReview = (reviewId: string) => {
+    if (!reviewId) {
+      console.error("Không tìm thấy reviewId", reviewId);
+      toast.error("Không tìm thấy ID đánh giá để xóa");
+      return;
+    }
 
-
-  deleteReview(reviewId);
-};
+    deleteReview(reviewId);
+  };
   return (
     <ClientLayout>
       <article className="mt-[98px]">
         <div className="flex gap-4 my-4">
           <div className="text-sm">
-               <a href="/">Trang chủ</a>
+            <a href="/">Trang chủ</a>
           </div>
           <div className="text-sm">-</div>
           <div className="text-sm">
@@ -137,12 +150,17 @@ const handleDeleteReview = (reviewId: string) => {
           <div className="p-4 pl-0">
             <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-semibold">
-                Chi tiết đơn hàng 
+                Chi tiết đơn hàng
                 <span className="text-red-600 ml-2">#{data.orderId}</span>
               </h2>
-              <button className="text-sm text-red-500 hover:underline">
-                {data.status}
-              </button>
+              <div className="flex flex-col items-end text-sm">
+                <span className="text-red-500">
+                  TT thanh toán: {data.paymentStatus}
+                </span>
+                <span className="text-red-500">
+                  TT giao hàng: {data.shippingStatus}
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-col lg:flex-row justify-between">
@@ -152,10 +170,10 @@ const handleDeleteReview = (reviewId: string) => {
                     <div className="flex gap-4">
                       <img
                         src={
-                            item.productVariantId?.images?.main?.url
-                              ? item.productVariantId.images.main.url
-                              : "https://via.placeholder.com/150x215?text=No+Image"
-                          }
+                          item.productInfo?.images?.main?.url
+                            ? item.productInfo.images.main.url
+                            : "https://via.placeholder.com/150x215?text=No+Image"
+                        }
                         alt={item.productName}
                         className="w-[100px] h-[165px] object-cover"
                       />
@@ -164,33 +182,44 @@ const handleDeleteReview = (reviewId: string) => {
                           <div className="flex justify-between gap-[110px]">
                             <div className="font-semibold">
                               {item.productName}
-                              </div>
+                            </div>
                             <div className="font-semibold">
-                              {item.price.toLocaleString("vi-VN")}đ
-                              </div>
+                              {Number(item.price || 0).toLocaleString("vi-VN")}đ
+                            </div>
                           </div>
                           <p className="text-sm text-gray-600 py-0.5">
-                            Màu sắc: {item.productVariantId?.color?.colorName || item.colo|| "Không có"}
-                            </p>
-                          <p className="text-sm text-gray-600 py-0.5">Size: {item.size}</p>
-                          <p className="text-sm text-gray-600 py-0.5">Số lượng: {item.quantity}</p>
-                          <p className="text-sm text-gray-600 py-0.5">SKU: {item.productVariantId?.sku || item.sku || "Không có"}</p>
+                            Màu sắc:{" "}
+                            {item.productInfo?.color?.colorName ||
+                              item.color ||
+                              "Không có"}
+                          </p>
+                          <p className="text-sm text-gray-600 py-0.5">
+                            Size: {item.size}
+                          </p>
+                          <p className="text-sm text-gray-600 py-0.5">
+                            Số lượng: {item.quantity}
+                          </p>
+                          <p className="text-sm text-gray-600 py-0.5">
+                            SKU:{" "}
+                            {item.productInfo?.sku || item.sku || "Không có"}
+                          </p>
                         </div>
                         <div className="flex gap-2">
-                           <button
-                          onClick={() => handleBuyAgain(item)}
-                          className="w-fit mt-2 px-4 py-1 border border-black rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-black hover:text-white transition"
-                        >
-                          MUA LẠI
-                        </button>
-                       {data.status.toLowerCase() === "giao hàng thành công" && (
+                          <button
+                            onClick={() => handleBuyAgain(item)}
+                            className="w-fit mt-2 px-4 py-1 border border-black rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-black hover:text-white transition"
+                          >
+                            MUA LẠI
+                          </button>
+                          {data.shippingStatus?.toLowerCase() ===
+                            "giao hàng thành công" && (
                             <>
                               {!item.review ? (
                                 <button
                                   onClick={() =>
                                     setShowReviewForm({
                                       orderId: data._id,
-                                      productVariantId: item.productVariantId._id,
+                                      productVariantId: item.productVariantId,
                                     })
                                   }
                                   className="w-fit mt-2 px-4 py-1 border border-black bg-black text-white rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-white hover:text-black transition"
@@ -200,7 +229,9 @@ const handleDeleteReview = (reviewId: string) => {
                               ) : (
                                 <div className="flex gap-2 mt-2">
                                   <button
-                                    onClick={() => handleViewReview(item.productVariantId._id)}
+                                    onClick={() =>
+                                      handleViewReview(item.productVariantId)
+                                    }
                                     className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
                                   >
                                     XEM ĐÁNH GIÁ
@@ -209,7 +240,7 @@ const handleDeleteReview = (reviewId: string) => {
                                     onClick={() =>
                                       setShowReviewForm({
                                         orderId: data._id,
-                                        productVariantId: item.productVariantId._id,
+                                        productVariantId: item.productVariantId,
                                         mode: "edit",
                                         initialData: item.review,
                                       })
@@ -220,7 +251,9 @@ const handleDeleteReview = (reviewId: string) => {
                                   </button>
                                   <button
                                     className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
-                                    onClick={() => handleDeleteReview(item.review?._id)}
+                                    onClick={() =>
+                                      handleDeleteReview(item.review?._id)
+                                    }
                                     disabled={isDeleting}
                                   >
                                     {isDeleting ? "Đang xóa..." : "XÓA"}
@@ -237,7 +270,6 @@ const handleDeleteReview = (reviewId: string) => {
                 ))}
               </div>
 
-
               <div className="w-full lg:w-[320px] bg-[#f7f7f7] p-5 rounded-md text-sm space-y-5 shadow-sm">
                 <h3 className="text-base font-semibold pb-3 border-b border-gray-300">
                   Tóm tắt đơn hàng
@@ -248,27 +280,29 @@ const handleDeleteReview = (reviewId: string) => {
                     <span>Ngày tạo đơn</span>
                     <span className="font-medium">
                       {new Date(data.updatedAt).toLocaleDateString("vi-VN")}
-                      </span>
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tạm tính</span>
                     <span className="font-medium">
                       {data.totalPrice.toLocaleString("vi-VN")} đ
                     </span>
-                    </div>
+                  </div>
                   <div className="flex justify-between">
                     <span>Phí vận chuyển</span>
-                    <span className="font-medium">{data.shippingFee.toLocaleString("vi-VN")} đ</span>
-                    </div>
+                    <span className="font-medium">
+                      {data.shippingFee.toLocaleString("vi-VN")} đ
+                    </span>
+                  </div>
                   <div className="flex justify-between">
                     <span>Giảm giá</span>
-                    <span className="font-medium">{data.discountAmount.toLocaleString("vi-VN")} đ</span>
+                    <span className="font-medium">
+                      {data.discountAmount.toLocaleString("vi-VN")} đ
+                    </span>
                   </div>
                   <div className="flex justify-between font-semibold pt-3 border-t border-gray-300 mt-2 text-base">
                     <span>Tổng tiền</span>
-                    <span>
-                      {data.finalAmount.toLocaleString("vi-VN")} đ
-                      </span>
+                    <span>{data.finalAmount.toLocaleString("vi-VN")} đ</span>
                   </div>
                 </div>
 
@@ -289,7 +323,10 @@ const handleDeleteReview = (reviewId: string) => {
                 <div>
                   <h4 className="font-semibold border-t pt-3 mb-1">Địa chỉ</h4>
                   <p className="py-1 text-gray-700">{data.receiver.name}</p>
-                  <p className="py-1 text-gray-700">{data.receiver.address}, {data.receiver.communeName}, {data.receiver.districtName}, {data.receiver.cityName} </p>
+                  <p className="py-1 text-gray-700">
+                    {data.receiver.address}, {data.receiver.communeName},{" "}
+                    {data.receiver.districtName}, {data.receiver.cityName}{" "}
+                  </p>
                   <p className="py-1 text-gray-700">
                     Điện thoại: {data.receiver.phone}
                   </p>
@@ -311,32 +348,45 @@ const handleDeleteReview = (reviewId: string) => {
 
       {showReviewForm && (
         <>
-            {console.log("showReviewForm:", showReviewForm)}
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-          
-          <div className="bg-white p-6 rounded-lg max-w-md w-full relative">
-            <button onClick={() => setShowReviewForm(null)} className="absolute top-2 right-2 text-gray-500 hover:text-red-500">✕</button>
-            <ReviewForm
-              mode={showReviewForm.mode}
-              orderId={showReviewForm.orderId}
-              productVariantId={showReviewForm.productVariantId}
-              initialData={showReviewForm.initialData}
-              onSuccess={() => {
-                setShowReviewForm(null);
-                window.location.reload();
-              }}
-            />
+          {console.log("showReviewForm:", showReviewForm)}
+          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full relative">
+              <button
+                onClick={() => setShowReviewForm(null)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+              >
+                ✕
+              </button>
+              <ReviewForm
+                mode={showReviewForm.mode}
+                orderId={showReviewForm.orderId}
+                productVariantId={showReviewForm.productVariantId}
+                initialData={showReviewForm.initialData}
+                onSuccess={() => {
+                  setShowReviewForm(null);
+                  window.location.reload();
+                }}
+              />
+            </div>
           </div>
-        </div>
-          </>
+        </>
       )}
 
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-xl w-full max-w-xl">
-            <ReviewItem productVariantId={selectedVariantId} orderId={data._id} userId={auth.user?.id} />
+            <ReviewItem
+              productVariantId={selectedVariantId}
+              orderId={data._id}
+              userId={auth.user?.id}
+            />
             <div className="text-right mt-4">
-              <button onClick={handleClose} className="px-4 py-2 bg-gray-300 rounded">Đóng</button>
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>

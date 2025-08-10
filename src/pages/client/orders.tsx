@@ -14,23 +14,34 @@ const Orders = () => {
     current: 1,
     pageSize: 10,
   });
-  const [statusFilter, setStatusFilter] = useState("Tất cả");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("Tất cả");
+  const [shippingStatusFilter, setShippingStatusFilter] = useState("Tất cả");
   const userId = localStorage.getItem("user_id");
 
-const { data, isLoading, error, refetch } = useQuery({
-  queryKey: ["orders", pagination.current, pagination.pageSize, statusFilter, userId],
-  queryFn: async () => {
-    let url = `orders?_page=${pagination.current}&_limit=${pagination.pageSize}`;
-    if (statusFilter !== "Tất cả") {
-      url += `&status=${encodeURIComponent(statusFilter)}`;
-    }
-    if (userId) {
-      url += `&_userId=${userId}`;
-    }
-    const response = await getList({ namespace: url });
-    return response;
-  },
-});
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: [
+      "orders",
+      pagination.current,
+      pagination.pageSize,
+      paymentStatusFilter,
+      shippingStatusFilter,
+      userId,
+    ],
+    queryFn: async () => {
+      let url = `orders?_page=${pagination.current}&_limit=${pagination.pageSize}`;
+      if (paymentStatusFilter !== "Tất cả") {
+        url += `&status=${encodeURIComponent(paymentStatusFilter)}`;
+      }
+      if (shippingStatusFilter !== "Tất cả") {
+        url += `&status=${encodeURIComponent(shippingStatusFilter)}`;
+      }
+      if (userId) {
+        url += `&_userId=${userId}`;
+      }
+      const response = await getList({ namespace: url });
+      return response;
+    },
+  });
 
   const tableData = data?.data || [];
   const total = data?.total || 0;
@@ -48,16 +59,25 @@ const { data, isLoading, error, refetch } = useQuery({
     setPagination({ current: page, pageSize });
   };
   window.scrollTo({ top: 0, behavior: "smooth" });
-  const statusOptions = [
+  const paymentStatusOptions = [
+    "Tất cả",
+    "Chờ xác nhận",
+    "Chờ thanh toán",
+    "Đã thanh toán",
+    "Huỷ do quá thời gian thanh toán",
+    "Người mua huỷ",
+    "Người bán huỷ",
+  ];
+
+  const shippingStatusOptions = [
     "Tất cả",
     "Chờ xác nhận",
     "Đã xác nhận",
     "Đang giao hàng",
-    "Đã giao hàng",
-    "Đã hủy",
-    "Chờ thanh toán",
-    "Đã thanh toán",
-    "Huỷ do quá thời gian thanh toán",
+    "Giao hàng thành công",
+    "Giao hàng thất bại",
+    "Người mua huỷ",
+    "Người bán huỷ",
   ];
 
   const getPageNumbers = () => {
@@ -93,32 +113,32 @@ const { data, isLoading, error, refetch } = useQuery({
     return pageNumbers;
   };
 
- const handleCancelOrder = async (orderId: string) => {
-  const result = await Swal.fire({
-    title: "Xác nhận huỷ?",
-    text: "Bạn có chắc muốn huỷ đơn hàng này?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Huỷ đơn",
-    cancelButtonText: "Không",
-    confirmButtonColor: "black",
-    cancelButtonColor: "#6c757d",
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    const res = await axiosInstance.post("orders/cancel", {
-      orderId,
-      cancelBy: "buyer",
+  const handleCancelOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: "Xác nhận huỷ?",
+      text: "Bạn có chắc muốn huỷ đơn hàng này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Huỷ đơn",
+      cancelButtonText: "Không",
+      confirmButtonColor: "black",
+      cancelButtonColor: "#6c757d",
     });
 
-    toast.success(res.data.message || "Huỷ đơn hàng thành công");
-    refetch();
-  } catch (err: any) {
-    toast.error(err.response?.data?.message || "Huỷ đơn hàng thất bại");
-  }
-};
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await axiosInstance.post("orders/cancel", {
+        orderId,
+        cancelBy: "buyer",
+      });
+
+      toast.success(res.data.message || "Huỷ đơn hàng thành công");
+      refetch();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Huỷ đơn hàng thất bại");
+    }
+  };
   return (
     <ClientLayout>
       <article className="mt-[98px]">
@@ -138,42 +158,83 @@ const { data, isLoading, error, refetch } = useQuery({
           <div className="flex-1 bg-white rounded-lg shadow-sm">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Quản lý đơn hàng</h2>
-              <div className="w-48">
-                <span className="block text-sm font-medium text-gray-700 mb-1">
-                  Trạng thái đơn hàng:
-                </span>
-                <div className="relative">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      setPagination({ ...pagination, current: 1 });
-                    }}
-                    className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
-                  >
-                    {statusOptions.map((status) => (
-                      <option
-                        key={status}
-                        value={status}
-                        className="text-gray-900"
-                      >
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600">
-                    <svg
-                      className="h-5 w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
+              <div className="flex gap-4">
+                <div className="w-48">
+                  <span className="block text-sm font-medium text-gray-700 mb-1">
+                    TT thanh toán:
+                  </span>
+                  <div className="relative">
+                    <select
+                      value={paymentStatusFilter}
+                      onChange={(e) => {
+                        setPaymentStatusFilter(e.target.value);
+                        setPagination({ ...pagination, current: 1 });
+                      }}
+                      className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                      {paymentStatusOptions.map((status) => (
+                        <option
+                          key={status}
+                          value={status}
+                          className="text-gray-900"
+                        >
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600">
+                      <svg
+                        className="h-5 w-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-48">
+                  <span className="block text-sm font-medium text-gray-700 mb-1">
+                    TT giao hàng:
+                  </span>
+                  <div className="relative">
+                    <select
+                      value={shippingStatusFilter}
+                      onChange={(e) => {
+                        setShippingStatusFilter(e.target.value);
+                        setPagination({ ...pagination, current: 1 });
+                      }}
+                      className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-400"
+                    >
+                      {shippingStatusOptions.map((status) => (
+                        <option
+                          key={status}
+                          value={status}
+                          className="text-gray-900"
+                        >
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600">
+                      <svg
+                        className="h-5 w-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -192,7 +253,10 @@ const { data, isLoading, error, refetch } = useQuery({
                       Ngày đặt
                     </th>
                     <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Trạng thái
+                      TT thanh toán
+                    </th>
+                    <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      TT giao hàng
                     </th>
                     <th className="py-3 pr-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Tổng tiền
@@ -221,26 +285,47 @@ const { data, isLoading, error, refetch } = useQuery({
                         <td className="py-4 pr-6">
                           <span
                             className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              order.status === "Huỷ do quá thời gian thanh toán"
+                              order.paymentStatus ===
+                              "Huỷ do quá thời gian thanh toán"
                                 ? "bg-red-100 text-red-800"
-                                : order.status === "Đã thanh toán"
+                                : order.paymentStatus === "Đã thanh toán"
                                 ? "bg-green-100 text-green-800"
-                                : order.status === "Chờ thanh toán"
+                                : order.paymentStatus === "Chờ thanh toán"
                                 ? "bg-yellow-100 text-yellow-800"
-                                : order.status === "Chờ xác nhận"
+                                : order.paymentStatus === "Chờ xác nhận"
                                 ? "bg-blue-100 text-blue-800"
-                                : order.status === "Đang giao hàng"
-                                ? "bg-purple-100 text-purple-800"
-                                : order.status === "Đã giao hàng"
-                                ? "bg-green-100 text-green-800"
-                                : order.status === "Đã hủy"
+                                : order.paymentStatus === "Người mua huỷ" ||
+                                  order.paymentStatus === "Người bán huỷ"
                                 ? "bg-red-100 text-red-800"
                                 : ""
                             }`}
                           >
-                            {order.status === "Huỷ do quá thời gian thanh toán"
+                            {order.paymentStatus ===
+                            "Huỷ do quá thời gian thanh toán"
                               ? "Quá hạn thanh toán"
-                              : order.status}
+                              : order.paymentStatus}
+                          </span>
+                        </td>
+                        <td className="py-4 pr-6">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              order.shippingStatus === "Giao hàng thành công"
+                                ? "bg-green-100 text-green-800"
+                                : order.shippingStatus === "Đang giao hàng"
+                                ? "bg-purple-100 text-purple-800"
+                                : order.shippingStatus === "Chờ xác nhận"
+                                ? "bg-blue-100 text-blue-800"
+                                : order.shippingStatus === "Giao hàng thất bại"
+                                ? "bg-red-100 text-red-800"
+                                : order.shippingStatus === "Người mua huỷ" ||
+                                  order.shippingStatus === "Người bán huỷ"
+                                ? "bg-red-100 text-red-800"
+                                : order.shippingStatus === "Đã xác nhận"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : ""
+                            }`}
+                          >
+                            {order.shippingStatus}
                           </span>
                         </td>
                         <td className="py-4 pr-6 text-sm text-gray-900 font-medium">
@@ -254,7 +339,7 @@ const { data, isLoading, error, refetch } = useQuery({
                             >
                               Chi tiết
                             </Link>
-                            {order.status === "Chờ thanh toán" &&
+                            {order.paymentStatus === "Chờ thanh toán" &&
                               order.paymentUrl && (
                                 <a
                                   href={order.paymentUrl}
@@ -265,14 +350,21 @@ const { data, isLoading, error, refetch } = useQuery({
                                   Thanh toán
                                 </a>
                               )}
-                              {["Chờ xác nhận", "Đã thanh toán", "Chờ thanh toán", "Đã xác nhận"].includes(order.status) && (
-                                <button
-                                  onClick={() => handleCancelOrder(order.orderId)}
-                                  className="text-red-600 hover:text-red-900 transition-colors duration-200"
-                                >
-                                  Huỷ đơn
-                                </button>
-                              )}
+                            {([
+                              "Chờ xác nhận",
+                              "Đã thanh toán",
+                              "Chờ thanh toán",
+                            ].includes(order.paymentStatus) ||
+                              ["Chờ xác nhận", "Đã xác nhận"].includes(
+                                order.shippingStatus
+                              )) && (
+                              <button
+                                onClick={() => handleCancelOrder(order.orderId)}
+                                className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                              >
+                                Huỷ đơn
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -280,7 +372,7 @@ const { data, isLoading, error, refetch } = useQuery({
                   ) : (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={7}
                         className="py-4 text-center text-sm text-gray-600"
                       >
                         Chưa có đơn hàng nào.

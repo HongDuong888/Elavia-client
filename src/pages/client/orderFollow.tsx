@@ -42,6 +42,26 @@ const statusMap: Record<string, number> = {
   "Đã nhận hàng": 4,
 };
 
+// Helper function to determine current step based on both payment and shipping status
+const getCurrentStep = (paymentStatus: string, shippingStatus: string) => {
+  // If order is cancelled, show step 0
+  if (
+    paymentStatus?.includes("huỷ") ||
+    paymentStatus?.includes("Huỷ") ||
+    shippingStatus?.includes("huỷ") ||
+    shippingStatus?.includes("Huỷ")
+  ) {
+    return 0;
+  }
+
+  // Use shipping status as primary indicator for progress
+  const shippingStep = statusMap[shippingStatus] ?? 0;
+  const paymentStep = statusMap[paymentStatus] ?? 0;
+
+  // Return the higher step between payment and shipping
+  return Math.max(shippingStep, paymentStep);
+};
+
 const OrderFollow = () => {
   const { id } = useParams();
   const { auth } = useAuth();
@@ -52,7 +72,7 @@ const OrderFollow = () => {
     queryFn: () => getById({ namespace: "orders", id }),
     refetchInterval: 5000,
   });
-  
+
   if (isLoading) return <Loading />;
   if (!data)
     return (
@@ -61,7 +81,7 @@ const OrderFollow = () => {
       </div>
     );
 
-  const currentStep = statusMap[data.status] ?? 0;
+  const currentStep = getCurrentStep(data.paymentStatus, data.shippingStatus);
 
   const handleBuyAgain = (item: any) => {
     if (!auth.user?.id) {
@@ -69,7 +89,7 @@ const OrderFollow = () => {
       return;
     }
     addToCartMutation.mutate({
-      productVariantId: item.productVariantId?._id,
+      productVariantId: item.productInfo?._id,
       size: item.size,
       quantity: 1,
       userId: auth.user.id,
@@ -82,7 +102,8 @@ const OrderFollow = () => {
         <div className="text-sm text-gray-500 mb-2">
           Trang chủ &nbsp; - &nbsp; Thông tin đơn hàng
           <span className="float-right font-medium text-red-600">
-            {data.status}
+            TT thanh toán: {data.paymentStatus} | TT giao hàng:{" "}
+            {data.shippingStatus}
           </span>
         </div>
         <hr className="border-t border-gray-300 my-4" />
@@ -141,9 +162,10 @@ const OrderFollow = () => {
             {/* Chi tiết trạng thái đơn hàng */}
             <div className="mt-8">
               <h3 className="font-semibold mb-4 text-lg flex">
-                Chi tiết trạng thái đơn hàng  <span className="text-red-600 ml-2">#{data.orderId}</span>
+                Chi tiết trạng thái đơn hàng{" "}
+                <span className="text-red-600 ml-2">#{data.orderId}</span>
               </h3>
-              <div className="relative ml-4">
+              {/* <div className="relative ml-4">
                 <div
                   className="absolute left-2 top-2 bottom-2 w-1 bg-gray-200 z-0 rounded-full"
                   style={{ height: `calc(100% - 16px)` }}
@@ -191,7 +213,7 @@ const OrderFollow = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </div> */}
             </div>
 
             {/* Sản phẩm */}
@@ -202,24 +224,23 @@ const OrderFollow = () => {
               >
                 <img
                   src={
-                    item.productVariantId?.images?.main?.url ||
+                    item.productInfo?.images?.main?.url ||
                     "https://via.placeholder.com/150x215?text=No+Image"
                   }
-                  alt={item.productName}
+                  alt={item.productInfo?.productName}
                   className="w-[120px] h-[160px] object-cover rounded"
                 />
                 <div>
                   <div className="font-semibold text-lg">
-                    {item.productName}
+                    {item.productInfo?.productName}
                   </div>
                   <div className="text-sm">
-                    Màu sắc:{" "}
-                    {item.productVariantId?.color?.colorName || "Không có"}
+                    Màu sắc: {item.productInfo?.color?.colorName || "Không có"}
                   </div>
                   <div className="text-sm">Size: {item.size}</div>
                   <div className="text-sm">Số lượng: {item.quantity}</div>
                   <div className="text-sm">
-                    SKU: {item.productVariantId?.sku || "Không có"}
+                    SKU: {item.productInfo?.sku || "Không có"}
                   </div>
                   <button
                     className="mt-2 px-4 py-1 border border-black 
@@ -260,17 +281,19 @@ const OrderFollow = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Phí vận chuyển</span>
-                  <span className="font-medium">{data.shippingFee.toLocaleString("vi-VN")} đ</span>
+                  <span className="font-medium">
+                    {data.shippingFee.toLocaleString("vi-VN")} đ
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                    <span>Giảm giá</span>
-                    <span className="font-medium">{data.discountAmount.toLocaleString("vi-VN")} đ</span>
-                  </div>
+                  <span>Giảm giá</span>
+                  <span className="font-medium">
+                    {data.discountAmount.toLocaleString("vi-VN")} đ
+                  </span>
+                </div>
                 <div className="flex justify-between font-semibold pt-3 border-t border-gray-300 mt-2 text-base">
                   <span>Tổng tiền</span>
-                  <span>
-                    {data.finalAmount.toLocaleString("vi-VN")} đ
-                  </span>
+                  <span>{data.finalAmount.toLocaleString("vi-VN")} đ</span>
                 </div>
               </div>
 
@@ -291,7 +314,10 @@ const OrderFollow = () => {
               <div>
                 <h4 className="font-semibold border-t pt-3 mb-1">Địa chỉ</h4>
                 <p className="py-1 text-gray-700">{data.receiver.name}</p>
-                <p className="py-1 text-gray-700">{data.receiver.address}, {data.receiver.wardName}, {data.receiver.districtName}, {data.receiver.cityName} </p>
+                <p className="py-1 text-gray-700">
+                  {data.receiver.address}, {data.receiver.wardName},{" "}
+                  {data.receiver.districtName}, {data.receiver.cityName}{" "}
+                </p>
                 <p className="py-1 text-gray-700">
                   Điện thoại: {data.receiver.phone}
                 </p>

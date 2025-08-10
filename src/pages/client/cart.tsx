@@ -66,6 +66,17 @@ const Cart = () => {
     },
   });
 
+  // ✅ Helper function để lấy giá từ size được chọn
+  const getItemPrice = (item: ICartItem): number => {
+    if (!item?.productVariantId?.sizes || !item?.size) return 0;
+
+    const selectedSize = item.productVariantId.sizes.find(
+      (s: any) => s.size === item.size
+    );
+
+    return selectedSize?.price || 0;
+  };
+
   const handleDeleteItem = (productVariantId: string, size: string) => {
     if (!auth.user?.id) {
       toast.error("Bạn cần đăng nhập để thực hiện thao tác này");
@@ -123,14 +134,11 @@ const Cart = () => {
     return sum + item.quantity;
   }, 0);
 
+  // ✅ Sửa cách tính tổng tiền - sử dụng giá từ size
   const totalPrice = validItems.reduce((sum, item) => {
-    if (
-      !item?.productVariantId?.price ||
-      typeof item.productVariantId.price !== "number" ||
-      !item.quantity
-    )
-      return sum;
-    return sum + item.productVariantId.price * item.quantity;
+    const itemPrice = getItemPrice(item);
+    const quantity = item?.quantity || 0;
+    return sum + itemPrice * quantity;
   }, 0);
 
   return (
@@ -160,6 +168,10 @@ const Cart = () => {
                       item?.productVariantId?.sizes?.find(
                         (s: any) => s.size === item.size
                       )?.stock || 0;
+
+                    // ✅ Lấy giá từ size được chọn
+                    const itemPrice = getItemPrice(item);
+
                     return (
                       <div
                         key={item._id}
@@ -226,10 +238,8 @@ const Cart = () => {
                               </div>
                               <div className="text-sm text-gray-600">
                                 <span className="font-medium">Giá:</span>{" "}
-                                {(
-                                  item?.productVariantId?.price || 0
-                                ).toLocaleString("vi-VN")}{" "}
-                                đ
+                                {/* ✅ Hiển thị giá từ size */}
+                                {itemPrice.toLocaleString("vi-VN")} đ
                               </div>
                             </div>
 
@@ -303,10 +313,9 @@ const Cart = () => {
                             </div>
 
                             <div className="font-medium text-right mt-2">
-                              Tổng:{" "}
+                              Tổng: {/* ✅ Tính tổng từ giá size thực tế */}
                               {(
-                                (item?.productVariantId?.price || 0) *
-                                (item?.quantity || 0)
+                                itemPrice * (item?.quantity || 0)
                               ).toLocaleString("vi-VN")}{" "}
                               đ
                             </div>
@@ -351,6 +360,10 @@ const Cart = () => {
                         item?.productVariantId?.sizes?.find(
                           (s: any) => s.size === item.size
                         )?.stock || 0;
+
+                      // ✅ Lấy giá từ size được chọn
+                      const itemPrice = getItemPrice(item);
+
                       return (
                         <tr
                           key={item._id}
@@ -470,16 +483,14 @@ const Cart = () => {
                             {item.size}
                           </td>
                           <td className="pr-4 py-2 text-sm text-gray-700">
-                            {(item?.productVariantId?.price).toLocaleString(
-                              "vi-VN"
-                            )}{" "}
-                            đ
+                            {/* ✅ Hiển thị giá từ size */}
+                            {itemPrice.toLocaleString("vi-VN")} đ
                           </td>
                           <td className="pr-4 py-2 text-sm text-gray-700">
-                            {(
-                              (item?.productVariantId?.price || 0) *
-                              (item?.quantity || 0)
-                            ).toLocaleString("vi-VN")}{" "}
+                            {/* ✅ Tính tổng từ giá size thực tế */}
+                            {(itemPrice * (item?.quantity || 0)).toLocaleString(
+                              "vi-VN"
+                            )}{" "}
                             đ
                           </td>
                           <td

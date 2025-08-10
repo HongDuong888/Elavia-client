@@ -21,12 +21,11 @@ interface ProductVariantWithDetails {
     actualColor: string;
     colorName: string;
   };
-  price: number;
   productId: {
     _id: string;
     name: string;
   };
-  sizes: { size: string; stock: number }[];
+  sizes: { size: string; stock: number; price: number }[];
 }
 
 interface Color {
@@ -57,10 +56,7 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
   const queryClient = useQueryClient();
   const { auth } = useAuth();
   const productVariants: ProductVariantWithDetails[] =
-    externalVariants ||
-    data?.data ||
-    (Array.isArray(data) ? data : []) ||
-    [];
+    externalVariants || data?.data || (Array.isArray(data) ? data : []) || [];
 
   const { data: wishlistData, isLoading: isWishlistLoading } = useQuery({
     queryKey: ["wishlist"],
@@ -174,6 +170,35 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
         values: new FormData(),
       });
     }
+  };
+
+  // ✅ Helper function để lấy giá của size nhỏ nhất còn hàng
+  const getDisplayPrice = (variant: ProductVariantWithDetails): number => {
+    if (!variant.sizes || variant.sizes.length === 0) return 0;
+
+    // Lọc các size còn hàng
+    const availableSizes = variant.sizes.filter((size) => size.stock > 0);
+
+    if (availableSizes.length === 0) {
+      // Nếu không có size nào còn hàng, lấy giá của size đầu tiên
+      return variant.sizes[0].price;
+    }
+
+    // Sắp xếp theo size và lấy size nhỏ nhất còn hàng
+    const sortedSizes = availableSizes.sort((a, b) => {
+      // Nếu size là số thì so sánh theo số
+      const sizeA = parseInt(a.size);
+      const sizeB = parseInt(b.size);
+
+      if (!isNaN(sizeA) && !isNaN(sizeB)) {
+        return sizeA - sizeB;
+      }
+
+      // Nếu không phải số thì so sánh theo chuỗi
+      return a.size.localeCompare(b.size);
+    });
+
+    return sortedSizes[0].price;
   };
 
   function isDarkColor(hex: string): boolean {
@@ -310,7 +335,8 @@ const ProductItemVariantForm: React.FC<ProductItemFormProps> = ({
         </Link>
         <div className="flex justify-between">
           <div className="font-semibold pt-2">
-            {displayVariant.price?.toLocaleString()}đ
+            {/* ✅ Sử dụng helper function để lấy giá đúng */}
+            {getDisplayPrice(displayVariant).toLocaleString()}đ
           </div>
           <div
             onClick={() =>

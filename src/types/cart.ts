@@ -14,7 +14,6 @@ export interface ICartItem {
   productVariantId: {
     _id: string;
     name: string;
-    price: number;
     images: {
       main: {
         url: string;
@@ -40,8 +39,9 @@ export interface ICartItem {
     sizes?: Array<{
       size: string;
       stock: number;
+      price: number;
     }>;
-    color?: { 
+    color?: {
       colorName?: string;
     };
   };

@@ -50,15 +50,18 @@ const DetailProduct = ({ productId }: { productId: string }) => {
     staleTime: 60 * 1000,
   });
   const { data } = useQuery({
-  queryKey: ["reviews", productId],
-  queryFn: () =>
-    axiosInstance.get(`/reviews/${productId}`).then((res) => res.data),
-});
-const reviews = data?.data || []; 
-const totalReviews = reviews.length;
-const averageRating = totalReviews
-  ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews).toFixed(1)
-  : "0.0";
+    queryKey: ["reviews", productId],
+    queryFn: () =>
+      axiosInstance.get(`/reviews/${productId}`).then((res) => res.data),
+  });
+  const reviews = data?.data || [];
+  const totalReviews = reviews.length;
+  const averageRating = totalReviews
+    ? (
+        reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
+        totalReviews
+      ).toFixed(1)
+    : "0.0";
   const wishlistIds: string[] =
     wishlistData?.data?.map((item: any) => item._id) || [];
 
@@ -68,6 +71,43 @@ const averageRating = totalReviews
       setColors(fetchedColors);
     },
   });
+
+  // ✅ Helper function để lấy giá hiển thị
+  const getDisplayPrice = (): number => {
+    if (!product?.sizes || product.sizes.length === 0) return 0;
+
+    // Nếu đã chọn size, hiển thị giá của size đó
+    if (selectedSize) {
+      const selectedSizeData = product.sizes.find(
+        (size: any) => size.size === selectedSize
+      );
+      if (selectedSizeData) {
+        return selectedSizeData.price;
+      }
+    }
+
+    // Nếu chưa chọn size, lấy giá của size nhỏ nhất còn hàng
+    const availableSizes = product.sizes.filter((size: any) => size.stock > 0);
+
+    if (availableSizes.length === 0) {
+      // Nếu hết hàng, lấy giá của size đầu tiên
+      return product.sizes[0].price;
+    }
+
+    // Sắp xếp và lấy size nhỏ nhất còn hàng
+    const sortedSizes = availableSizes.sort((a: any, b: any) => {
+      const sizeA = parseInt(a.size);
+      const sizeB = parseInt(b.size);
+
+      if (!isNaN(sizeA) && !isNaN(sizeB)) {
+        return sizeA - sizeB; // So sánh theo số
+      }
+
+      return a.size.localeCompare(b.size); // So sánh theo chuỗi
+    });
+
+    return sortedSizes[0].price;
+  };
 
   useEffect(() => {
     if (product) {
@@ -126,7 +166,7 @@ const averageRating = totalReviews
       });
     }
   };
-  
+
   const removeWishList = (id: string) => {
     if (id) {
       removeWishListMutation.mutate({
@@ -270,15 +310,25 @@ const averageRating = totalReviews
                         defaultValue={parseFloat(averageRating)}
                         className="text-yellow-500 flex items-center justify-center [&_.ant-rate-star]:!text-[16px] [&_.ant-rate-star-second]:!text-[16px] [&_.ant-rate-star-half]:!text-[16px] [&_.ant-rate-star-full]:!text-[16px] [&_.ant-rate-star-half-left]:!text-[16px] [&_.ant-rate-star-half-right]:!text-[16px] [&_.ant-rate-star]:!mr-[0px]"
                       />
-                      <div className="text-gray-500">({totalReviews} đánh giá)</div>
+                      <div className="text-gray-500">
+                        ({totalReviews} đánh giá)
+                      </div>
                     </>
                   ) : (
-                    <div className="text-sm italic text-gray-400">Chưa có đánh giá</div>
+                    <div className="text-sm italic text-gray-400">
+                      Chưa có đánh giá
+                    </div>
                   )}
                 </div>
               </div>
               <div className="text-2xl font-[550]">
-                {product.price.toLocaleString("vi-VN")}đ
+                {/* ✅ Sử dụng helper function để hiển thị giá đúng */}
+                {getDisplayPrice().toLocaleString("vi-VN")}đ
+                {selectedSize && (
+                  <span className="text-sm text-gray-500 ml-2">
+                    (Size {selectedSize})
+                  </span>
+                )}
               </div>
 
               <div className="text-xl font-[550] my-3">
@@ -322,10 +372,11 @@ const averageRating = totalReviews
                     _id: React.Key | null;
                     stock: number;
                     size: string;
+                    price: number; // ✅ Thêm type cho price
                   }) => (
                     <div
                       key={item._id}
-                      className={`border border-black w-[46px] h-[30px] flex items-center justify-center text-black ${
+                      className={`border border-black w-[46px] h-[30px] flex items-center justify-center text-black relative group ${
                         item.stock === 0
                           ? "line-through cursor-not-allowed opacity-50 bg-gray-100"
                           : "cursor-pointer hover:bg-gray-100"
@@ -333,8 +384,17 @@ const averageRating = totalReviews
                       onClick={() =>
                         item.stock > 0 && setSelectedSize(String(item.size))
                       }
+                      title={`${item.size} - ${item.price.toLocaleString(
+                        "vi-VN"
+                      )}đ`} // ✅ Hiển thị giá trong tooltip
                     >
                       {item.size}
+                      {/* ✅ Hiển thị giá khi hover */}
+                      {item.stock > 0 && (
+                        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                          {item.price.toLocaleString("vi-VN")}đ
+                        </div>
+                      )}
                     </div>
                   )
                 )}
@@ -526,8 +586,11 @@ const averageRating = totalReviews
                   className={`tab-content text-[14px] leading-6 ${
                     activeTab === "chi_tiet" ? "" : "hidden"
                   }`}
-                  dangerouslySetInnerHTML={{ __html: product.productId.description|| 
-                     "Mô tả chi tiết của sản phẩm." }}
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      product.productId.description ||
+                      "Mô tả chi tiết của sản phẩm.",
+                  }}
                 ></div>
                 <div
                   className={`tab-content text-[14px] leading-6 ${
@@ -563,7 +626,7 @@ const averageRating = totalReviews
               isSlideshow
             />
           </div>
-          
+
           <div>
             <img
               src="/images/banner1.3.webp"
@@ -578,4 +641,3 @@ const averageRating = totalReviews
 };
 
 export default DetailProduct;
-
