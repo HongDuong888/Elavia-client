@@ -33,6 +33,8 @@ const Detail_order = () => {
     };
   }>(null);
 
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+
   const { data: reviewList = [] } = useQuery({
     queryKey: ["reviews", id],
     queryFn: async () => {
@@ -82,6 +84,46 @@ const Detail_order = () => {
       toast.error("Xóa đánh giá thất bại");
     },
   });
+
+  // Mutation xác nhận đã nhận hàng
+  const { mutate: confirmReceived, isPending: isConfirming } = useMutation({
+    mutationFn: async () => {
+      await axiosInstance.post(
+        `/orders/orders/${data.orderId}/confirm-received`
+      );
+    },
+    onSuccess: () => {
+      toast.success("Xác nhận đã nhận hàng thành công!");
+      queryClient.invalidateQueries({ queryKey: ["orders", id] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+    },
+  });
+
+  // Mutation khiếu nại
+  const { mutate: createComplaint, isPending: isComplaining } = useMutation({
+    mutationFn: async (complaintData: {
+      reason: string;
+      description: string;
+      images?: string[];
+    }) => {
+      await axiosInstance.post(
+        `/orders/orders/${data.orderId}/complaint`,
+        complaintData
+      );
+    },
+    onSuccess: () => {
+      toast.success("Khiếu nại đã được gửi thành công!");
+      setShowComplaintForm(false);
+      queryClient.invalidateQueries({ queryKey: ["orders", id] });
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Có lỗi xảy ra khi gửi khiếu nại"
+      );
+    },
+  });
   if (isLoading) return <Loading />;
   if (!data)
     return (
@@ -120,6 +162,26 @@ const Detail_order = () => {
     }
 
     deleteReview(reviewId);
+  };
+
+  const handleConfirmReceived = () => {
+    if (window.confirm("Bạn có chắc chắn đã nhận được hàng?")) {
+      confirmReceived();
+    }
+  };
+
+  const handleSubmitComplaint = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const reason = formData.get("reason") as string;
+    const description = formData.get("description") as string;
+
+    if (!reason || !description) {
+      toast.error("Vui lòng điền đầy đủ thông tin khiếu nại");
+      return;
+    }
+
+    createComplaint({ reason, description });
   };
   return (
     <ClientLayout>
@@ -334,6 +396,124 @@ const Detail_order = () => {
               </div>
             </div>
 
+            {/* Các nút thao tác dựa trên trạng thái đơn hàng */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold mb-3">Thao tác với đơn hàng</h3>
+
+              {data.shippingStatus === "Giao hàng thành công" && (
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={handleConfirmReceived}
+                    disabled={isConfirming}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
+                  >
+                    {isConfirming ? "Đang xử lý..." : "✓ Xác nhận đã nhận hàng"}
+                  </button>
+
+                  <button
+                    onClick={() => setShowComplaintForm(true)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                  >
+                    ⚠ Khiếu nại chưa nhận hàng
+                  </button>
+                </div>
+              )}
+
+              {data.shippingStatus === "Đang giao hàng" && (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowComplaintForm(true)}
+                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+                  >
+                    ⚠ Báo cáo vấn đề giao hàng
+                  </button>
+                </div>
+              )}
+
+              {data.shippingStatus === "Đã nhận hàng" && (
+                <div className="text-green-600 font-medium">
+                  ✓ Bạn đã xác nhận nhận hàng thành công
+                </div>
+              )}
+
+              {(data.shippingStatus === "Khiếu nại" ||
+                data.shippingStatus === "Đang xử lý khiếu nại") && (
+                <div className="bg-yellow-100 p-3 rounded-lg">
+                  <div className="text-yellow-800 font-medium mb-2">
+                    📋 Trạng thái khiếu nại: {data.shippingStatus}
+                  </div>
+                  {data.complaint && (
+                    <div className="text-sm text-gray-700">
+                      <p>
+                        <strong>Lý do:</strong> {data.complaint.reason}
+                      </p>
+                      <p>
+                        <strong>Mô tả:</strong> {data.complaint.description}
+                      </p>
+                      <p>
+                        <strong>Ngày tạo:</strong>{" "}
+                        {new Date(data.complaint.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </p>
+                      <p>
+                        <strong>Trạng thái:</strong> {data.complaint.status}
+                      </p>
+                      {data.complaint.adminNote && (
+                        <p>
+                          <strong>Ghi chú admin:</strong>{" "}
+                          {data.complaint.adminNote}
+                        </p>
+                      )}
+                      {data.complaint.resolution && (
+                        <p>
+                          <strong>Cách giải quyết:</strong>{" "}
+                          {data.complaint.resolution}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {data.shippingStatus === "Khiếu nại được giải quyết" && (
+                <div className="bg-green-100 p-3 rounded-lg">
+                  <div className="text-green-800 font-medium mb-2">
+                    ✅ Khiếu nại đã được giải quyết
+                  </div>
+                  {data.complaint && (
+                    <div className="text-sm text-gray-700">
+                      <p>
+                        <strong>Cách giải quyết:</strong>{" "}
+                        {data.complaint.resolution}
+                      </p>
+                      {data.complaint.adminNote && (
+                        <p>
+                          <strong>Ghi chú:</strong> {data.complaint.adminNote}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {data.shippingStatus === "Khiếu nại bị từ chối" && (
+                <div className="bg-red-100 p-3 rounded-lg">
+                  <div className="text-red-800 font-medium mb-2">
+                    ❌ Khiếu nại bị từ chối
+                  </div>
+                  {data.complaint?.adminNote && (
+                    <div className="text-sm text-gray-700">
+                      <p>
+                        <strong>Lý do từ chối:</strong>{" "}
+                        {data.complaint.adminNote}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="mt-8">
               <button
                 className="bg-black text-white px-6 py-2 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:opacity-90 transition"
@@ -345,6 +525,80 @@ const Detail_order = () => {
           </div>
         </div>
       </article>
+
+      {showComplaintForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4 relative">
+            <button
+              onClick={() => setShowComplaintForm(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-lg font-semibold mb-4">Khiếu nại đơn hàng</h3>
+
+            <form onSubmit={handleSubmitComplaint} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Lý do khiếu nại <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="reason"
+                  required
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Chọn lý do khiếu nại</option>
+                  <option value="Chưa nhận được hàng">
+                    Chưa nhận được hàng
+                  </option>
+                  <option value="Hàng bị hư hỏng">Hàng bị hư hỏng</option>
+                  <option value="Sai sản phẩm">Sai sản phẩm</option>
+                  <option value="Thiếu hàng">Thiếu hàng</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Mô tả chi tiết <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="description"
+                  required
+                  rows={4}
+                  placeholder="Vui lòng mô tả chi tiết vấn đề bạn gặp phải..."
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="text-sm text-gray-600">
+                <p>• Khiếu nại sẽ được xử lý trong vòng 24-48h</p>
+                <p>
+                  • Chúng tôi sẽ liên hệ với bạn qua email hoặc số điện thoại
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowComplaintForm(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isComplaining}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+                >
+                  {isComplaining ? "Đang gửi..." : "Gửi khiếu nại"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showReviewForm && (
         <>
