@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ICartItem } from "../../types/cart";
 import { useAuth } from "../../context/auth.context";
@@ -14,6 +14,7 @@ import SelectAddressModal from "../../components/SelectAddressModal";
 
 const Dathang = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
   const { auth } = useAuth();
   const [showProducts, setShowProducts] = useState(false);
@@ -26,6 +27,10 @@ const Dathang = () => {
   );
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddressModal, setShowAddressModal] = useState(false);
+
+  // Lấy selectedItems từ location.state (từ trang cart)
+  const selectedItemsFromCart =
+    (location.state?.selectedItems as ICartItem[]) || [];
 
   interface Address {
     _id?: string;
@@ -44,15 +49,13 @@ const Dathang = () => {
     null
   );
 
-  const {
-    data: cartItems,
-    isLoading: cartLoading,
-    error: cartError,
-  } = useQuery({
-    queryKey: ["cart"],
-    queryFn: async () => getList({ namespace: `cart` }),
-    staleTime: 60 * 1000,
-  });
+  // Kiểm tra nếu không có sản phẩm được chọn, chuyển hướng về cart
+  useEffect(() => {
+    if (selectedItemsFromCart.length === 0) {
+      toast.warning("Vui lòng chọn sản phẩm từ giỏ hàng");
+      navigate("/cart");
+    }
+  }, [selectedItemsFromCart, navigate]);
 
   const {
     data: userData,
@@ -79,10 +82,8 @@ const Dathang = () => {
     myInfoData || {};
 
   let content = null;
-  if (cartLoading || userLoading || isMyInfoLoading) {
+  if (userLoading || isMyInfoLoading) {
     content = <Loading />;
-  } else if (cartError) {
-    content = <div>Lỗi khi tải giỏ hàng: {(cartError as Error).message}</div>;
   } else if (userError) {
     content = (
       <div>
@@ -128,8 +129,8 @@ const Dathang = () => {
         .join(", ")
     : "";
 
-  const items: ICartItem[] = cartItems?.items || [];
-  const validItems = items.filter(
+  // Sử dụng selectedItemsFromCart thay vì cartItems
+  const validItems = selectedItemsFromCart.filter(
     (item) =>
       item &&
       item.productVariantId &&
@@ -166,13 +167,13 @@ const Dathang = () => {
         currentAddress?.city?.name &&
         currentAddress?.district?.name &&
         currentAddress?.ward?.name &&
-        items.length > 0
+        selectedItemsFromCart.length > 0
       ) {
         const cleanedCity = cleanLocationName(currentAddress.city.name);
         const cleanedDistrict = cleanLocationName(currentAddress.district.name);
         const cleanedWard = cleanLocationName(currentAddress.ward.name);
 
-        const validItems = items.filter(
+        const validItemsForShipping = selectedItemsFromCart.filter(
           (item) =>
             item &&
             item.productVariantId &&
@@ -180,17 +181,17 @@ const Dathang = () => {
             item.productVariantId !== null
         );
 
-        const totalPrice = validItems.reduce((sum, item) => {
+        const totalPrice = validItemsForShipping.reduce((sum, item) => {
           const price = getPriceForSize(item);
           if (!price || !item.quantity) return sum;
           return sum + price * item.quantity;
         }, 0);
 
-        const totalWeight = validItems.reduce((sum, item) => {
+        const totalWeight = validItemsForShipping.reduce((sum, item) => {
           return sum + (item.quantity || 0) * 300;
         }, 0);
 
-        const totalHeight = validItems.reduce((sum, item) => {
+        const totalHeight = validItemsForShipping.reduce((sum, item) => {
           return sum + (item.quantity || 0) * 4;
         }, 0);
 
@@ -217,7 +218,7 @@ const Dathang = () => {
     };
 
     fetchShippingFee();
-  }, [currentAddress, items]);
+  }, [currentAddress, selectedItemsFromCart]);
 
   // Hàm helper để tạo items payload với version
   const createItemsPayload = (validItems: ICartItem[]) => {
@@ -229,6 +230,29 @@ const Dathang = () => {
       size: item.size,
       version: (item.productVariantId as any).version || 0, // Thêm version từ variant
     }));
+  };
+
+  // Hàm helper để xóa các sản phẩm đã chọn khỏi giỏ hàng
+  const removeSelectedItemsFromCart = async (validItems: ICartItem[]) => {
+    try {
+      for (const item of validItems) {
+        await axiosInstance.post(
+          `${import.meta.env.VITE_API_URL}/cart/remove`,
+          {
+            userId: auth.user.id,
+            productVariantId: item.productVariantId._id,
+            size: item.size,
+          }
+        );
+      }
+
+      // Invalidate cart queries để UI cập nhật
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      queryClient.invalidateQueries({ queryKey: ["cartQuantity"] });
+    } catch (error) {
+      console.error("Lỗi khi xóa sản phẩm khỏi giỏ hàng:", error);
+      // Không throw error vì đặt hàng đã thành công
+    }
   };
 
   const handlePayment = async () => {
@@ -273,7 +297,9 @@ const Dathang = () => {
             payload
           );
 
-          await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
+          // Xóa từng sản phẩm đã chọn khỏi giỏ hàng
+          await removeSelectedItemsFromCart(validItems);
+
           setisPending(false);
           toast.success("Đặt hàng thành công!");
           navigate(
@@ -357,7 +383,9 @@ const Dathang = () => {
             payload
           );
 
-          await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
+          // Xóa từng sản phẩm đã chọn khỏi giỏ hàng
+          await removeSelectedItemsFromCart(validItems);
+
           setisPending(false);
           window.location.href = momoResponse.data.payUrl;
         } catch (error: any) {
@@ -435,7 +463,9 @@ const Dathang = () => {
             payload
           );
 
-          await axiosInstance.get(`${import.meta.env.VITE_API_URL}/cart/clear`);
+          // Xóa từng sản phẩm đã chọn khỏi giỏ hàng
+          await removeSelectedItemsFromCart(validItems);
+
           setisPending(false);
           window.location.href = zaloResponse.data.order_url;
         } catch (error) {
@@ -729,6 +759,13 @@ const Dathang = () => {
                   <div className="text-[20px] text-[#221F20]">
                     Tóm tắt đơn hàng
                   </div>
+                  {validItems.length > 0 && (
+                    <div className="mt-2 mb-2 p-2 bg-blue-50 rounded border border-blue-200">
+                      <div className="text-sm text-blue-800 font-medium">
+                        🛒 {validItems.length} sản phẩm đã chọn từ giỏ hàng
+                      </div>
+                    </div>
+                  )}
                   <br />
                   <div className="text-[14px] text-[#57585A]">
                     <div className="flex justify-between">
@@ -826,7 +863,7 @@ const Dathang = () => {
                     {isFetchingShippingFee
                       ? "ĐANG TÍNH PHÍ..."
                       : validItems.length === 0
-                      ? "GIỎ HÀNG TRỐNG"
+                      ? "KHÔNG CÓ SẢN PHẨM"
                       : isPending
                       ? "ĐANG XỬ LÝ..."
                       : "HOÀN THÀNH"}
