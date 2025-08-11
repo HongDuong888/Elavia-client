@@ -27,6 +27,7 @@ import CategoryProducts from "./pages/client/categoryProducts";
 import ForgotPasswordWithCaptcha from "./pages/client/forgotPassWord";
 import ResetPassword from "./pages/client/resetPassWord";
 import NewArrivalProducts from "./pages/client/newArrivalProducts";
+import ChatBox from "./components/ChatBox";
 
 function App() {
   const DetailProductWrapper = () => {
@@ -74,10 +75,17 @@ function App() {
     { path: "/ordersuccess/:orderId", element: <Ordersuccess /> },
     { path: "/order-follow/:id", element: <OrderFollow /> },
     { path: "/new-arrival/:gender", element: <NewArrivalProducts /> },
-    { path: "/spring-summer-collection/:gender", element: <NewArrivalProducts /> },
-
+    {
+      path: "/spring-summer-collection/:gender",
+      element: <NewArrivalProducts />,
+    },
   ]);
-  return routes;
+  return (
+    <>
+      {routes}
+      <ChatBox />
+    </>
+  );
 }
 
 export default App;

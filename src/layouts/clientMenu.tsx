@@ -43,14 +43,13 @@ const MenuClient = () => {
     staleTime: 60 * 1000,
   });
 
-  const {
-    data: siteSettingsData,
-    isLoading: isSiteSettingsLoading,
-  } = useQuery({
-    queryKey: ["site-settings"],
-    queryFn: () => getList({ namespace: "site-settings" }),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: siteSettingsData, isLoading: isSiteSettingsLoading } = useQuery(
+    {
+      queryKey: ["site-settings"],
+      queryFn: () => getList({ namespace: "site-settings" }),
+      staleTime: 5 * 60 * 1000,
+    }
+  );
   const siteSettings = Array.isArray(siteSettingsData)
     ? siteSettingsData[0]
     : siteSettingsData;
@@ -76,6 +75,10 @@ const MenuClient = () => {
     },
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchTerm.trim() !== "") {
@@ -83,7 +86,62 @@ const MenuClient = () => {
         `/search-product?keyword=${encodeURIComponent(searchTerm.trim())}`
       );
       setSearchTerm(""); // clear ô input
+      setShowSuggestions(false);
     }
+  };
+
+  // Tìm kiếm gợi ý bằng AI
+  const searchSuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await fetch(
+        "http://localhost:5175/api/ai/search-suggestions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: query.trim() }),
+        }
+      );
+      const data = await res.json();
+
+      if (data.suggestions && data.suggestions.length > 0) {
+        setSuggestions(data.suggestions.slice(0, 5)); // Giới hạn 5 gợi ý
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error("Lỗi khi tìm kiếm gợi ý:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    setIsSearching(false);
+  };
+
+  const handleSearchInput = (value: string) => {
+    setSearchTerm(value);
+
+    // Debounce search để tránh gọi API quá nhiều
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+
+    searchTimeout.current = setTimeout(() => {
+      searchSuggestions(value);
+    }, 300); // Delay 300ms
+  };
+
+  const handleSuggestionClick = (productId: string) => {
+    navigate(`/products/${productId}`);
+    setSearchTerm("");
+    setShowSuggestions(false);
   };
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,12 +149,15 @@ const MenuClient = () => {
       if (!target.closest(".user-menu-container") && isUserMenuOpen) {
         setIsUserMenuOpen(false);
       }
+      if (!target.closest(".search-container") && showSuggestions) {
+        setShowSuggestions(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isUserMenuOpen]);
+  }, [isUserMenuOpen, showSuggestions]);
 
   if (isLoading) return <Loading />;
   if (error) return <p>Lỗi khi tải danh mục!</p>;
@@ -241,7 +302,7 @@ const MenuClient = () => {
         </div>
 
         <div className="flex items-center justify-end space-x-6">
-          <div className="hidden md:flex relative h-9 border items-center w-full max-w-xs">
+          <div className="hidden md:flex relative h-9 border items-center w-full max-w-xs search-container">
             <div className="flex px-2 gap-3 items-center w-full">
               <button
                 type="button"
@@ -253,6 +314,7 @@ const MenuClient = () => {
                       )}`
                     );
                     setSearchTerm("");
+                    setShowSuggestions(false);
                   }
                 }}
                 className="focus:outline-none"
@@ -270,12 +332,80 @@ const MenuClient = () => {
                 name="searchname"
                 id="searchname"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchInput(e.target.value)}
                 onKeyDown={handleSearch}
                 placeholder="TÌM KIẾM SẢN PHẨM"
                 className="text-xs p-0 outline-none border-0 focus:outline-none focus:ring-0 w-full"
               />
+              {isSearching && (
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+              )}
             </div>
+
+            {/* Dropdown gợi ý sản phẩm */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 shadow-lg z-50 max-h-80 overflow-y-auto">
+                <div className="p-2">
+                  <div className="text-xs text-gray-500 mb-2 px-2">
+                    Gợi ý từ AI ({suggestions.length} sản phẩm)
+                  </div>
+                  {suggestions.map((product, index) => (
+                    <div
+                      key={product._id || index}
+                      onClick={() => handleSuggestionClick(product._id)}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer rounded-md transition-colors"
+                    >
+                      <div className="w-12 h-12 overflow-hidden rounded-md border border-gray-200 flex-shrink-0">
+                        <img
+                          src={
+                            product.images?.main?.url ||
+                            "/images/placeholder.png"
+                          }
+                          alt={product.productId?.name || "Sản phẩm"}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "/images/placeholder.png";
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-900 truncate">
+                          {product.productId?.name || "Tên sản phẩm"}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-sm font-semibold text-red-600">
+                            {product.sizes?.[0]?.price?.toLocaleString("vi-VN")}₫
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {product.color?.colorName}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-blue-600">Xem →</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-gray-100 p-2">
+                  <button
+                    onClick={() => {
+                      if (searchTerm.trim()) {
+                        navigate(
+                          `/search-product?keyword=${encodeURIComponent(
+                            searchTerm.trim()
+                          )}`
+                        );
+                        setSearchTerm("");
+                        setShowSuggestions(false);
+                      }
+                    }}
+                    className="w-full text-center text-xs text-blue-600 hover:text-blue-800 py-1"
+                  >
+                    Xem tất cả kết quả cho "{searchTerm}"
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="hidden md:block">

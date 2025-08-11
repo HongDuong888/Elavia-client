@@ -274,7 +274,7 @@ const Detail_order = () => {
                             MUA LẠI
                           </button>
                           {data.shippingStatus?.toLowerCase() ===
-                            "giao hàng thành công" && (
+                            "đã nhận hàng" && (
                             <>
                               {!item.review ? (
                                 <button

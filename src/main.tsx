@@ -10,7 +10,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthWrapper } from "./context/auth.context.tsx";
 import ScrollToTop from "./components/scrollToTop.tsx";
-import ChatBox from "./components/ChatBox.tsx";
 import PendingPaymentOrdersBox from "./components/PendingPaymentOrdersBox";
 import { useContext } from "react";
 import { AuthContext } from "./context/auth.context";
@@ -25,7 +24,6 @@ function MainRoot() {
   return (
     <>
       <App />
-      <ChatBox />
       <PendingPaymentOrdersBox orders={pendingOrders || []} />
       <ToastContainer
         position="bottom-right"

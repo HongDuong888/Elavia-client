@@ -14,10 +14,11 @@ import {
   SetStateAction,
   useContext,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { info, logout } from "../services/userService";
 import { AxiosError } from "axios";
 import Loading from "../components/loading";
+import ChatBox from "../components/ChatBox";
 
 // Định nghĩa state xác thực
 interface AuthState {
@@ -59,6 +60,7 @@ interface AuthWrapperProps {
 
 // Component bao bọc xác thực
 export const AuthWrapper = ({ children }: AuthWrapperProps) => {
+  const queryClient = useQueryClient();
   const [auth, setAuth] = useState<AuthState>({
     isAuthenticated: false,
     isAuthenticating: true,
@@ -76,13 +78,31 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
     queryFn: info,
     enabled: !!localStorage.getItem("token"),
     staleTime: 1000 * 60 * 5, // optional: cache 5 phút
+    retry: false, // Không retry khi lỗi 401
   });
+
+  // Kiểm tra token ngay khi component mount
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Nếu không có token, set auth ngay lập tức
+      setAuth({
+        isAuthenticated: false,
+        isAuthenticating: false,
+        user: { id: "", email: "", role: "" },
+      });
+    }
+  }, []);
 
   // Xử lý logout
   const handleLogout = async () => {
     try {
       await logout();
       localStorage.removeItem("token");
+
+      // Clear tất cả React Query cache
+      queryClient.clear();
+
       setAuth({
         isAuthenticated: false,
         isAuthenticating: false,
@@ -92,7 +112,10 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
           role: "",
         },
       });
-      window.location.href = "/login";
+      setPendingOrders([]);
+
+      // Không dùng window.location.href để tránh reload
+      // window.location.href = "/login";
     } catch (logoutError) {
       console.error("Lỗi khi đăng xuất:", logoutError);
     }
@@ -148,7 +171,7 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
     }
   }, [data, error, isLoading]);
 
-  // // Hiển thị loading khi đang xác thực
+  // Hiển thị loading khi đang xác thực
   if (auth.isAuthenticating) {
     return <Loading />;
   }
@@ -159,6 +182,8 @@ export const AuthWrapper = ({ children }: AuthWrapperProps) => {
       value={{ auth, setAuth, pendingOrders, setPendingOrders }}
     >
       {children}
+      {/* ChatBox sẽ tự động hiển thị khi user đăng nhập */}
+      <ChatBox />
     </AuthContext.Provider>
   );
 };
