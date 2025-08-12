@@ -486,6 +486,8 @@ const Dathang = () => {
 
   const [discountAmount, setDiscountAmount] = useState(0);
   const [appliedVoucherId, setAppliedVoucherId] = useState("");
+  const [userVouchers, setUserVouchers] = useState<any[]>([]);
+  const [loadingUserVouchers, setLoadingUserVouchers] = useState(false);
 
   const handleApplyVoucher = async () => {
     if (!voucher) {
@@ -496,6 +498,53 @@ const Dathang = () => {
     try {
       const res = await axiosInstance.post("/vouchers/apply", {
         code: voucher,
+        userId: auth.user.id,
+        cartTotal: totalPrice,
+      });
+
+      setDiscountAmount(res.data.discount);
+      setAppliedVoucherId(res.data.voucherId);
+      toast.success(
+        `Áp dụng thành công. Giảm ${res.data.discount.toLocaleString("vi-VN")}đ`
+      );
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Mã giảm giá không hợp lệ");
+      setDiscountAmount(0);
+      setAppliedVoucherId("");
+    }
+  };
+
+  // Fetch user vouchers khi switch tab hoặc totalPrice thay đổi
+  const fetchUserVouchers = async () => {
+    if (!auth.user.id) return;
+
+    try {
+      setLoadingUserVouchers(true);
+      const res = await axiosInstance.get(
+        `/vouchers/user/${auth.user.id}?cartTotal=${totalPrice}`
+      );
+      setUserVouchers(res.data.vouchers || []);
+    } catch (error) {
+      console.error("Lỗi khi lấy voucher user:", error);
+      setUserVouchers([]);
+    } finally {
+      setLoadingUserVouchers(false);
+    }
+  };
+
+  // Load voucher khi chuyển tab "Mã của tôi" hoặc totalPrice thay đổi
+  useEffect(() => {
+    if (voucherTab === "ma-cua-toi") {
+      fetchUserVouchers();
+    }
+  }, [voucherTab, totalPrice, auth.user.id]);
+
+  // Hàm apply voucher từ danh sách "Mã của tôi"
+  const handleApplyUserVoucher = async (voucherCode: string) => {
+    setVoucher(voucherCode);
+    try {
+      const res = await axiosInstance.post("/vouchers/apply", {
+        code: voucherCode,
         userId: auth.user.id,
         cartTotal: totalPrice,
       });
@@ -843,8 +892,101 @@ const Dathang = () => {
                       </div>
                     )}
                     {voucherTab === "ma-cua-toi" && (
-                      <div className="mb-2 text-gray-500 text-sm">
-                        Bạn chưa có mã nào.
+                      <div className="mb-2">
+                        {loadingUserVouchers ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+                            <span className="ml-2 text-gray-600 text-sm">
+                              Đang tải...
+                            </span>
+                          </div>
+                        ) : userVouchers.length === 0 ? (
+                          <div className="text-gray-500 text-sm">
+                            Bạn chưa có mã nào có thể sử dụng.
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {userVouchers.map((userVoucher: any) => {
+                              const isApplied =
+                                appliedVoucherId === userVoucher._id;
+                              const discountText =
+                                userVoucher.type === "percent"
+                                  ? `${userVoucher.value}%`
+                                  : `${userVoucher.value.toLocaleString(
+                                      "vi-VN"
+                                    )}đ`;
+                              const maxDiscountText = userVoucher.maxDiscount
+                                ? ` (tối đa ${userVoucher.maxDiscount.toLocaleString(
+                                    "vi-VN"
+                                  )}đ)`
+                                : "";
+
+                              return (
+                                <div
+                                  key={userVoucher._id}
+                                  className={`p-2 border rounded-lg text-xs ${
+                                    isApplied
+                                      ? "border-green-500 bg-green-50"
+                                      : "border-gray-200 hover:border-gray-300"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-1 mb-1">
+                                        <span
+                                          className={`text-xs font-bold px-2 py-1 rounded ${
+                                            isApplied
+                                              ? "bg-green-100 text-green-800"
+                                              : "bg-blue-100 text-blue-800"
+                                          }`}
+                                        >
+                                          {userVoucher.code}
+                                        </span>
+                                        <span className="text-xs font-medium text-gray-900">
+                                          -{discountText}
+                                          {maxDiscountText}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-gray-600 mb-1 line-clamp-1">
+                                        {userVoucher.description}
+                                      </p>
+                                      <div className="flex gap-2 text-xs text-gray-500">
+                                        <span>
+                                          Tối thiểu:{" "}
+                                          {userVoucher.minOrderValue.toLocaleString(
+                                            "vi-VN"
+                                          )}
+                                          đ
+                                        </span>
+                                        <span>
+                                          HSD:{" "}
+                                          {userVoucher.expiresAt
+                                            ? new Date(
+                                                userVoucher.expiresAt
+                                              ).toLocaleDateString("vi-VN")
+                                            : "Không giới hạn"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() =>
+                                        handleApplyUserVoucher(userVoucher.code)
+                                      }
+                                      disabled={isApplied}
+                                      className={`px-3 py-1 text-xs font-medium rounded transition ${
+                                        isApplied
+                                          ? "bg-green-500 text-white cursor-not-allowed"
+                                          : "bg-black text-white hover:bg-gray-800"
+                                      }`}
+                                    >
+                                      {isApplied ? "Đã dùng" : "Dùng"}
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
