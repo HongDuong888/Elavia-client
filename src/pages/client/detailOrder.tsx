@@ -12,6 +12,7 @@ import ReviewForm from "../../components/reviewForm";
 import ReviewList from "../../components/reviewList";
 import axiosInstance from "../../services/axiosInstance";
 import ReviewItem from "../../components/reviewItem";
+import Swal from "sweetalert2";
 
 const Detail_order = () => {
   const { id } = useParams();
@@ -183,6 +184,158 @@ const Detail_order = () => {
 
     createComplaint({ reason, description });
   };
+
+  // Hàm hủy đơn hàng
+  const handleCancelOrder = async () => {
+    // Hiển thị form nhập lý do hủy đơn
+    const { value: formValues } = await Swal.fire({
+      title: "Hủy đơn hàng",
+      html: `
+        <div class="text-left">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Lý do hủy đơn <span class="text-red-500">*</span>
+          </label>
+          <select id="cancelReason" class="swal2-input" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+            <option value="">Chọn lý do hủy đơn</option>
+            <option value="Đổi ý không muốn mua">Đổi ý không muốn mua</option>
+            <option value="Tìm được giá rẻ hơn">Tìm được giá rẻ hơn</option>
+            <option value="Thông tin sản phẩm không chính xác">Thông tin sản phẩm không chính xác</option>
+            <option value="Thời gian giao hàng quá lâu">Thời gian giao hàng quá lâu</option>
+            <option value="Khác">Khác</option>
+          </select>
+          <label class="block text-sm font-medium text-gray-700 mb-2 mt-4">
+            Ghi chú thêm (tùy chọn)
+          </label>
+          <textarea id="cancelNote" class="swal2-textarea" placeholder="Nhập ghi chú thêm nếu có..." style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+          
+          ${
+            data.paymentStatus === "Đã thanh toán"
+              ? `
+            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p class="text-sm text-blue-800">
+                <strong>📝 Thông báo:</strong> Đơn hàng đã thanh toán sẽ được hoàn tiền tự động trong vòng 1-3 ngày làm việc.
+              </p>
+              <p class="text-sm text-blue-700 mt-1">
+                Số tiền hoàn: <strong>${data.finalAmount.toLocaleString(
+                  "vi-VN"
+                )}đ</strong>
+              </p>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Xác nhận hủy",
+      cancelButtonText: "Đóng",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      focusConfirm: false,
+      preConfirm: () => {
+        const reason = (
+          document.getElementById("cancelReason") as HTMLSelectElement
+        )?.value;
+        const note = (
+          document.getElementById("cancelNote") as HTMLTextAreaElement
+        )?.value;
+
+        if (!reason) {
+          Swal.showValidationMessage("Vui lòng chọn lý do hủy đơn");
+          return false;
+        }
+
+        return {
+          reason: reason,
+          note: note,
+        };
+      },
+    });
+
+    if (!formValues) return;
+
+    // Xác nhận cuối cùng
+    const confirmResult = await Swal.fire({
+      title: "Xác nhận hủy đơn hàng?",
+      html: `
+        <div class="text-left">
+          <p><strong>Mã đơn hàng:</strong> ${data.orderId}</p>
+          <p><strong>Lý do:</strong> ${formValues.reason}</p>
+          ${
+            formValues.note
+              ? `<p><strong>Ghi chú:</strong> ${formValues.note}</p>`
+              : ""
+          }
+          ${
+            data.paymentStatus === "Đã thanh toán"
+              ? `
+            <div class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p class="text-sm text-yellow-800">
+                ⚠️ Đơn hàng đã thanh toán sẽ được hoàn tiền tự động
+              </p>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Hủy đơn",
+      cancelButtonText: "Quay lại",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const res = await axiosInstance.post("orders/cancel", {
+        orderId: data.orderId,
+        cancelBy: "buyer",
+        reason: formValues.reason,
+        note: formValues.note,
+      });
+
+      // Hiển thị thông báo thành công với thông tin hoàn tiền nếu có
+      let successMessage = res.data.message || "Hủy đơn hàng thành công";
+
+      if (res.data.refundInfo && res.data.refundInfo.requiresRefund) {
+        successMessage += `\n💰 Hoàn tiền: ${res.data.refundInfo.amount.toLocaleString(
+          "vi-VN"
+        )}đ`;
+        if (res.data.refundInfo.autoRefund) {
+          successMessage += `\n✅ ${res.data.refundInfo.message}`;
+        } else {
+          successMessage += `\n⏳ Hoàn tiền đang được xử lý`;
+        }
+      }
+
+      await Swal.fire({
+        title: "Hủy đơn hàng thành công!",
+        text: successMessage,
+        icon: "success",
+        confirmButtonColor: "#059669",
+      });
+
+      // Refresh data để cập nhật trạng thái
+      queryClient.invalidateQueries({ queryKey: ["orders", id] });
+
+      // Chuyển về trang quản lý đơn hàng
+      navigate("/orders");
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "Hủy đơn hàng thất bại";
+
+      await Swal.fire({
+        title: "Hủy đơn hàng thất bại",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#dc2626",
+      });
+    }
+  };
+
   return (
     <ClientLayout>
       <article className="mt-[98px]">
@@ -366,6 +519,86 @@ const Detail_order = () => {
                     <span>Tổng tiền</span>
                     <span>{data.finalAmount.toLocaleString("vi-VN")} đ</span>
                   </div>
+
+                  {/* Hiển thị thông tin hoàn tiền nếu có */}
+                  {data.paymentDetails?.refundRequested && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h5 className="font-semibold text-blue-800 mb-2">
+                        💰 Thông tin hoàn tiền
+                      </h5>
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span>Số tiền hoàn:</span>
+                          <span className="font-medium">
+                            {data.paymentDetails.refundAmount?.toLocaleString(
+                              "vi-VN"
+                            )}{" "}
+                            đ
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Trạng thái:</span>
+                          <span
+                            className={`font-medium ${
+                              data.paymentDetails.refundStatus ===
+                                "completed" ||
+                              data.paymentDetails.refundStatus ===
+                                "Đã hoàn thành"
+                                ? "text-green-600"
+                                : data.paymentDetails.refundStatus ===
+                                    "pending" ||
+                                  data.paymentDetails.refundStatus ===
+                                    "Đang xử lý"
+                                ? "text-yellow-600"
+                                : data.paymentDetails.refundStatus ===
+                                    "failed" ||
+                                  data.paymentDetails.refundStatus ===
+                                    "Bị từ chối"
+                                ? "text-red-600"
+                                : "text-blue-600"
+                            }`}
+                          >
+                            {data.paymentDetails.refundStatus === "completed"
+                              ? "Đã hoàn thành"
+                              : data.paymentDetails.refundStatus === "pending"
+                              ? "Đang xử lý"
+                              : data.paymentDetails.refundStatus === "failed"
+                              ? "Thất bại"
+                              : data.paymentDetails.refundStatus ||
+                                "Đang xử lý"}
+                          </span>
+                        </div>
+                        {data.paymentDetails.refundRequestedAt && (
+                          <div className="flex justify-between">
+                            <span>Ngày yêu cầu:</span>
+                            <span className="font-medium">
+                              {new Date(
+                                data.paymentDetails.refundRequestedAt
+                              ).toLocaleDateString("vi-VN")}
+                            </span>
+                          </div>
+                        )}
+                        {data.paymentDetails.refundProcessedAt && (
+                          <div className="flex justify-between">
+                            <span>Ngày xử lý:</span>
+                            <span className="font-medium">
+                              {new Date(
+                                data.paymentDetails.refundProcessedAt
+                              ).toLocaleDateString("vi-VN")}
+                            </span>
+                          </div>
+                        )}
+                        {data.paymentDetails.refundNote && (
+                          <div className="mt-2">
+                            <span className="font-medium">Ghi chú:</span>
+                            <p className="text-gray-600 mt-1">
+                              {data.paymentDetails.refundNote}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -399,6 +632,23 @@ const Detail_order = () => {
             {/* Các nút thao tác dựa trên trạng thái đơn hàng */}
             <div className="mt-6 p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold mb-3">Thao tác với đơn hàng</h3>
+
+              {/* Nút hủy đơn hàng - chỉ hiển thị khi có thể hủy */}
+              {["Chờ xác nhận", "Đã xác nhận"].includes(
+                data.shippingStatus
+              ) && (
+                <div className="mb-4 pb-4 border-b border-gray-200">
+                  <button
+                    onClick={handleCancelOrder}
+                    className="px-4 py-2 bg-red-600 text-white rounded-tl-xl rounded-br-xl hover:bg-red-700 transition"
+                  >
+                    Hủy đơn hàng
+                  </button>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Bạn có thể hủy đơn hàng trước khi bắt đầu giao hàng
+                  </p>
+                </div>
+              )}
 
               {data.shippingStatus === "Giao hàng thành công" && (
                 <div className="flex gap-3 flex-wrap">
