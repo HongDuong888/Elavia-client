@@ -14,7 +14,7 @@ interface Message {
   _id: string;
   content: string;
   senderType: "user" | "admin";
-  type?: "text" | "image" | "product";
+  type?: "text" | "image" | "product" | "product_with_size";
   createdAt: string;
   senderId: {
     name: string;
@@ -25,6 +25,7 @@ interface Message {
 interface Conversation {
   _id: string;
   status: "waiting" | "active" | "closed";
+  aiEnabled?: boolean;
   adminId?: {
     name: string;
     email: string;
@@ -42,6 +43,7 @@ const ChatBox: React.FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [isAIEnabled, setIsAIEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(
@@ -107,6 +109,7 @@ const ChatBox: React.FC = () => {
 
       console.log("Conversation response:", response.status, response.data);
       setConversation(response.data.conversation);
+      setIsAIEnabled(response.data.conversation.aiEnabled || false);
       await loadMessages(response.data.conversation._id);
     } catch (error: any) {
       console.error("Error getting conversation:", error);
@@ -252,6 +255,44 @@ const ChatBox: React.FC = () => {
     setNewMessage(message);
   };
 
+  // Toggle AI Advisor
+  const toggleAIAdvisor = async () => {
+    if (!conversation) return;
+
+    try {
+      const newAIState = !isAIEnabled;
+      
+      const response = await axiosInstance.put(
+        `/chat/conversation/${conversation._id}/ai`,
+        { enableAI: newAIState }
+      );
+
+      if (response.data.success) {
+        setIsAIEnabled(newAIState);
+        
+        // Thêm system message để thông báo
+        const systemMessage = {
+          _id: Date.now().toString(),
+          content: newAIState 
+            ? "🤖 Tư vấn viên AI đã được kích hoạt! Tôi sẽ hỗ trợ bạn ngay lập tức." 
+            : "👨‍💼 Tư vấn viên AI đã được tắt. Bạn có thể chờ tư vấn viên con người hỗ trợ.",
+          senderType: "admin" as const,
+          type: "text" as const,
+          createdAt: new Date().toISOString(),
+          senderId: {
+            name: newAIState ? "AI Assistant" : "System",
+            email: "ai@elavia.com",
+          },
+        };
+        
+        setMessages(prev => [...prev, systemMessage]);
+      }
+    } catch (error: any) {
+      console.error("Error toggling AI:", error);
+      alert("Lỗi khi bật/tắt tư vấn viên AI");
+    }
+  };
+
   // Quick reply suggestions for customer
   const quickReplies = [
     "Xin chào! Tôi cần hỗ trợ.",
@@ -338,8 +379,28 @@ const ChatBox: React.FC = () => {
           {/* Header */}
           <div className="bg-gradient-to-r from-gray-900 to-black text-white p-4 rounded-t-xl flex justify-between items-center">
             <div className="flex-1">
-              <h3 className="font-bold text-base">💬 Hỗ trợ khách hàng</h3>
-              <span className="text-xs text-gray-300">{getStatusText()}</span>
+              <div className="flex items-center gap-3">
+                <div>
+                  <h3 className="font-bold text-base">💬 Hỗ trợ khách hàng</h3>
+                  <span className="text-xs text-gray-300">{getStatusText()}</span>
+                </div>
+                {conversation && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={toggleAIAdvisor}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                        isAIEnabled 
+                          ? 'bg-green-600 hover:bg-green-700 text-white' 
+                          : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                      }`}
+                      title={isAIEnabled ? 'Tắt AI' : 'Bật AI'}
+                    >
+                      <span>{isAIEnabled ? '🤖' : '🤖'}</span>
+                      <span>{isAIEnabled ? 'AI ON' : 'AI OFF'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex space-x-1">
               <button
@@ -484,12 +545,12 @@ const ChatBox: React.FC = () => {
                                                 {productData.color}
                                               </span>
                                               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 font-medium">
-                                                {productData.size}
+                                                Size: {productData.size}
                                               </span>
                                             </div>
 
                                             {/* Price */}
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 mb-2">
                                               <span className="text-lg font-bold text-red-600">
                                                 {finalPrice.toLocaleString(
                                                   "vi-VN"
@@ -547,8 +608,17 @@ const ChatBox: React.FC = () => {
                           >
                             {message.senderType === "admin" && (
                               <span className="font-semibold text-gray-700 flex items-center">
-                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                                {message.senderId?.name || "Admin"}
+                                {message.senderId?.name === "AI Assistant" ? (
+                                  <>
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-1"></span>
+                                    <span className="text-blue-600">🤖 AI Assistant</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                    {message.senderId?.name || "Admin"}
+                                  </>
+                                )}
                               </span>
                             )}
                             <span

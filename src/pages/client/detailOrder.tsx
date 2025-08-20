@@ -72,19 +72,7 @@ const Detail_order = () => {
     };
   });
 
-  const { mutate: deleteReview, isPending: isDeleting } = useMutation({
-    mutationFn: async (reviewId: string) => {
-      await axiosInstance.delete(`/reviews/${reviewId}`);
-    },
-    onSuccess: () => {
-      toast.success("Xóa đánh giá thành công");
-      queryClient.invalidateQueries({ queryKey: ["orders", id] });
-      queryClient.invalidateQueries({ queryKey: ["reviews", id] });
-    },
-    onError: () => {
-      toast.error("Xóa đánh giá thất bại");
-    },
-  });
+  
 
   // Mutation xác nhận đã nhận hàng
   const { mutate: confirmReceived, isPending: isConfirming } = useMutation({
@@ -155,16 +143,6 @@ const Detail_order = () => {
       userId: auth.user.id,
     });
   };
-  const handleDeleteReview = (reviewId: string) => {
-    if (!reviewId) {
-      console.error("Không tìm thấy reviewId", reviewId);
-      toast.error("Không tìm thấy ID đánh giá để xóa");
-      return;
-    }
-
-    deleteReview(reviewId);
-  };
-
   const handleConfirmReceived = () => {
     if (window.confirm("Bạn có chắc chắn đã nhận được hàng?")) {
       confirmReceived();
@@ -451,28 +429,25 @@ const Detail_order = () => {
                                   >
                                     XEM ĐÁNH GIÁ
                                   </button>
-                                  <button
-                                    onClick={() =>
-                                      setShowReviewForm({
-                                        orderId: data._id,
-                                        productVariantId: item.productVariantId,
-                                        mode: "edit",
-                                        initialData: item.review,
-                                      })
-                                    }
-                                    className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
-                                  >
-                                    SỬA
-                                  </button>
-                                  <button
-                                    className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
-                                    onClick={() =>
-                                      handleDeleteReview(item.review?._id)
-                                    }
-                                    disabled={isDeleting}
-                                  >
-                                    {isDeleting ? "Đang xóa..." : "XÓA"}
-                                  </button>
+                                  
+                                  {item.review?.updatedCount === 0 && (
+                                    <>
+                                      <button
+                                        onClick={() =>
+                                          setShowReviewForm({
+                                            orderId: data._id,
+                                            productVariantId:
+                                              item.productVariantId,
+                                            mode: "edit",
+                                            initialData: item.review,
+                                          })
+                                        }
+                                        className="px-4 py-1 rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] border border-black bg-black text-white hover:bg-white hover:text-black transition"
+                                      >
+                                        SỬA
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </>
