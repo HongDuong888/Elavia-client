@@ -888,6 +888,37 @@ const DetailProduct = ({ productId }: { productId: string }) => {
                                         )}
                                       </div>
                                     )}
+
+                                  {/* Phản hồi từ admin */}
+                                  {review.reply && review.reply.comment && (
+                                    <div className="mt-3 ml-6 pl-4 border-l-2 border-blue-200 bg-blue-50 rounded-r-lg p-3">
+                                      <div className="flex items-start gap-2">
+                                        <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
+                                          </svg>
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2 mb-1">
+                                            <div className="font-medium text-sm text-blue-800">
+                                              👑 Elavia Store
+                                            </div>
+                                            <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
+                                              Phản hồi
+                                            </span>
+                                            <span className="text-xs text-gray-500 ml-auto">
+                                              {new Date(
+                                                review.reply.updatedAt || review.reply.createdAt
+                                              ).toLocaleDateString("vi-VN")}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-gray-700 leading-relaxed">
+                                            {review.reply.comment}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>

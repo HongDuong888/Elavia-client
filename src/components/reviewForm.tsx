@@ -28,6 +28,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
   const [comment, setComment] = useState<string>("");
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
   const [existingImages, setExistingImages] = useState<
     { url: string; public_id: string }[]
   >([]);
@@ -72,7 +73,25 @@ const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
 );
   setPreviewUrls((prev) => [...prev, ...newPreviews]);
 };
-
+const handleGetSuggestion = async () => {
+  setSuggestLoading(true);
+  try {
+    const res = await axiosInstance.get("/reviews/suggestion", {
+      params: { orderId, productVariantId },
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    if (res.data?.suggestion) {
+      setComment(res.data.suggestion);
+      toast.success("Đã lấy gợi ý từ AI");
+    } else {
+      toast.info("Không có gợi ý phù hợp");
+    }
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || "Lấy gợi ý thất bại");
+  } finally {
+    setSuggestLoading(false);
+  }
+};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!comment.trim()) {
@@ -155,6 +174,17 @@ const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         ))}
       </div>
 
+      <div className="flex justify-between items-center mb-2">
+        <label className="font-medium">Nhận xét</label>
+        <button
+          type="button"
+          onClick={handleGetSuggestion}
+          disabled={suggestLoading}
+          className="text-sm text-blue-600 hover:underline disabled:text-gray-400"
+        >
+          {suggestLoading ? "Đang gợi ý..." : "Gợi ý từ AI"}
+        </button>
+      </div>
       {/* Comment */}
       <textarea
         maxLength={200}
@@ -168,88 +198,89 @@ const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         {comment.length}/200 ký tự
       </div>
 
-
       {/* Upload ảnh */}
       <div className="mb-4">
-          <label className="block font-medium mb-1">Ảnh sản phẩm</label>
+        <label className="block font-medium mb-1">Ảnh sản phẩm</label>
 
-          <p className="text-sm text-gray-500 mb-1">
-            Đã chọn: {existingImages.length + previewUrls.length}/6 ảnh
-          </p>
+        <p className="text-sm text-gray-500 mb-1">
+          Đã chọn: {existingImages.length + previewUrls.length}/6 ảnh
+        </p>
 
-          {/* Ẩn nếu đã đủ 6 ảnh */}
-          {existingImages.length + previewUrls.length < 6 && (
-            <div
-              className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition"
-              onClick={() => document.getElementById("fileInput")?.click()}
-            >
-              <p className="text-sm text-gray-500">Click để chọn ảnh</p>
-              <input
-                id="fileInput"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </div>
-          )}
+        {/* Ẩn nếu đã đủ 6 ảnh */}
+        {existingImages.length + previewUrls.length < 6 && (
+          <div
+            className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition"
+            onClick={() => document.getElementById("fileInput")?.click()}
+          >
+            <p className="text-sm text-gray-500">Click để chọn ảnh</p>
+            <input
+              id="fileInput"
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+          </div>
+        )}
 
-          {/* Hiển thị ảnh đã upload */}
-          {existingImages.length > 0 && (
-            <div className="mt-3 flex gap-2 flex-wrap">
-              {existingImages.map((img, index) => (
-                <div key={img.public_id} className="relative w-[80px] h-[80px]">
-                  <img
-                    src={img.url}
-                    alt={`existing-${index}`}
-                    className="object-cover w-full h-full rounded border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRemovedImagePublicIds((prev) => [...prev, img.public_id]);
-                      setExistingImages((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      );
-                    }}
-                    className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Hiển thị ảnh đã upload */}
+        {existingImages.length > 0 && (
+          <div className="mt-3 flex gap-2 flex-wrap">
+            {existingImages.map((img, index) => (
+              <div key={img.public_id} className="relative w-[80px] h-[80px]">
+                <img
+                  src={img.url}
+                  alt={`existing-${index}`}
+                  className="object-cover w-full h-full rounded border"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRemovedImagePublicIds((prev) => [
+                      ...prev,
+                      img.public_id,
+                    ]);
+                    setExistingImages((prev) =>
+                      prev.filter((_, i) => i !== index)
+                    );
+                  }}
+                  className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-          {/* Hiển thị ảnh mới chọn */}
-          {previewUrls.length > 0 && (
-            <div className="mt-3 flex gap-2 flex-wrap">
-              {previewUrls.map((url, index) => (
-                <div key={index} className="relative w-[80px] h-[80px]">
-                  <img
-                    src={url}
-                    alt={`preview-${index}`}
-                    className="object-cover w-full h-full rounded border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImages((prev) => prev.filter((_, i) => i !== index));
-                      setPreviewUrls((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      );
-                    }}
-                    className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
+        {/* Hiển thị ảnh mới chọn */}
+        {previewUrls.length > 0 && (
+          <div className="mt-3 flex gap-2 flex-wrap">
+            {previewUrls.map((url, index) => (
+              <div key={index} className="relative w-[80px] h-[80px]">
+                <img
+                  src={url}
+                  alt={`preview-${index}`}
+                  className="object-cover w-full h-full rounded border"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImages((prev) => prev.filter((_, i) => i !== index));
+                    setPreviewUrls((prev) =>
+                      prev.filter((_, i) => i !== index)
+                    );
+                  }}
+                  className="absolute top-0 right-0 text-xs bg-black bg-opacity-60 text-white px-1 rounded-bl hover:bg-opacity-80"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Submit button */}
       <button
@@ -257,7 +288,11 @@ const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         disabled={loading}
         className="w-fit mt-2 px-4 py-1 border border-black bg-black text-white rounded-tl-[8px] rounded-bl-none rounded-tr-none rounded-br-[8px] hover:bg-white hover:text-black transition"
       >
-        {loading ? "Đang gửi..." : mode === "edit" ? "Cập nhật" : "Gửi đánh giá"}
+        {loading
+          ? "Đang gửi..."
+          : mode === "edit"
+          ? "Cập nhật"
+          : "Gửi đánh giá"}
       </button>
     </div>
   );
