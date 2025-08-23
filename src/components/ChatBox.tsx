@@ -14,7 +14,7 @@ interface Message {
   _id: string;
   content: string;
   senderType: "user" | "admin";
-  type?: "text" | "image" | "product" | "product_with_size";
+  type?: "text" | "image" | "product" | "product_with_size" | "mixed";
   createdAt: string;
   senderId: {
     name: string;
@@ -251,8 +251,34 @@ const ChatBox: React.FC = () => {
   };
 
   // Quick reply function
-  const handleQuickReply = (message: string) => {
+  const handleQuickReply = async (message: string) => {
+    if (!conversation || isSending) return;
+    
     setNewMessage(message);
+    
+    // Tự động gửi tin nhắn luôn
+    try {
+      setIsSending(true);
+      const response = await axiosInstance.post("/chat/message", {
+        conversationId: conversation._id,
+        content: message.trim(),
+        type: "text",
+      });
+
+      console.log("Quick reply sent successfully:", response.data);
+      setMessages((prev) => [...prev, response.data.message]);
+      setNewMessage(""); // Clear input sau khi gửi thành công
+    } catch (error: any) {
+      console.error("Error sending quick reply:", error);
+      const status = error.response?.status || "unknown";
+      const errorMessage = error.response?.data?.message || error.message;
+      console.error("Failed to send quick reply:", status, errorMessage);
+      alert(`Lỗi gửi tin nhắn: ${status} - ${errorMessage}`);
+      // Nếu lỗi, giữ lại tin nhắn trong input
+      setNewMessage(message);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // Toggle AI Advisor
@@ -372,8 +398,8 @@ const ChatBox: React.FC = () => {
       {/* Chat Window */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 right-6 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 ${
-            isMinimized ? "h-16" : "h-[450px]"
+          className={`fixed bottom-6 right-6 w-[380px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 ${
+            isMinimized ? "h-18" : "h-auto"
           } transition-all duration-300 overflow-hidden`}
         >
           {/* Header */}
@@ -423,7 +449,7 @@ const ChatBox: React.FC = () => {
           {/* Messages Area */}
           {!isMinimized && (
             <>
-              <div className="flex-1 overflow-y-auto p-4 h-80 bg-gradient-to-b from-gray-50 to-gray-100">
+              <div className="flex-1 overflow-y-auto p-4 h-[330px] bg-gradient-to-b from-gray-50 to-gray-100">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -595,6 +621,124 @@ const ChatBox: React.FC = () => {
                                   }
                                 })()}
                               </div>
+                            ) : message.type === "mixed" ? (
+                              <div className="w-full">
+                                {(() => {
+                                  try {
+                                    const mixedData = JSON.parse(message.content);
+                                    return (
+                                      <div className="space-y-4">
+                                        {/* AI Text Response */}
+                                        <div className="text-sm leading-relaxed text-gray-800">
+                                          {mixedData.text}
+                                        </div>
+                                        
+                                        {/* Product Recommendation */}
+                                        {mixedData.product && (
+                                          <div className="max-w-sm">
+                                            {(() => {
+                                              const productData = mixedData.product;
+                                              const finalPrice = productData.price * (1 - (productData.discount || 0) / 100);
+                                              
+                                              return (
+                                                <div
+                                                  className="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-2xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                                                  onClick={() => {
+                                                    const params = new URLSearchParams();
+                                                    if (productData.size) {
+                                                      params.set("size", productData.size);
+                                                    }
+                                                    window.location.href = `/products/${productData.variantId}?${params.toString()}`;
+                                                  }}
+                                                >
+                                                  {/* Header với AI icon */}
+                                                  <div className="flex items-center gap-2 mb-3">
+                                                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                      <span className="text-white text-xs">🤖</span>
+                                                    </div>
+                                                    <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                                      AI Gợi ý
+                                                    </span>
+                                                  </div>
+
+                                                  <div className="flex gap-3">
+                                                    <div className="relative">
+                                                      <img
+                                                        src={productData.image}
+                                                        alt={productData.name}
+                                                        className="w-20 h-20 rounded-xl object-cover shadow-md"
+                                                        onError={(e) => {
+                                                          const target = e.target as HTMLImageElement;
+                                                          target.src = "/images/no-image.png";
+                                                        }}
+                                                      />
+                                                      {productData.discount > 0 && (
+                                                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                                                          -{productData.discount}%
+                                                        </div>
+                                                      )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                      <h4 className="font-bold text-gray-900 mb-2 text-sm leading-tight">
+                                                        {productData.name}
+                                                      </h4>
+
+                                                      <div className="flex flex-wrap gap-1 mb-3">
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
+                                                          {productData.color}
+                                                        </span>
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 font-medium">
+                                                          Size: {productData.size}
+                                                        </span>
+                                                        {productData.stock > 0 && (
+                                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-emerald-100 text-emerald-800 font-medium">
+                                                            Còn hàng
+                                                          </span>
+                                                        )}
+                                                      </div>
+
+                                                      <div className="flex items-center gap-2 mb-2">
+                                                        <span className="text-lg font-bold text-red-600">
+                                                          {finalPrice.toLocaleString("vi-VN")}đ
+                                                        </span>
+                                                        {productData.discount > 0 && (
+                                                          <span className="text-sm text-gray-400 line-through">
+                                                            {productData.price.toLocaleString("vi-VN")}đ
+                                                          </span>
+                                                        )}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+
+                                                  <div className="mt-4 pt-3 border-t border-blue-100">
+                                                    <div className="flex items-center justify-between">
+                                                      <span className="text-xs text-blue-600 font-medium">
+                                                        👆 Nhấn để xem chi tiết
+                                                      </span>
+                                                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                                                        <span className="text-blue-600 text-xs">→</span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              );
+                                            })()}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  } catch (error) {
+                                    console.error('Mixed message render error:', error);
+                                    return (
+                                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                        <div className="text-red-600 text-sm font-medium">
+                                          ⚠️ Lỗi hiển thị tin nhắn AI
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                })()}
+                              </div>
                             ) : (
                               message.content
                             )}
@@ -639,11 +783,13 @@ const ChatBox: React.FC = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Replies - Chỉ hiển thị khi cuộc trò chuyện mới (chưa có tin nhắn) */}
+              {/* Quick Replies - Chỉ hiển thị khi cuộc trò chuyện mới (chưa có tin nhắn và không đang gửi) */}
               {conversation &&
                 conversation.status !== "closed" &&
-                messages.length === 0 && (
-                  <div className="px-4 py-2 border-t border-gray-100">
+                messages.length === 0 &&
+                !isSending &&
+                newMessage.trim() === "" && (
+                  <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
                     <div className="text-xs text-gray-600 mb-2 font-medium">
                       💡 Câu hỏi thường gặp:
                     </div>
@@ -652,7 +798,7 @@ const ChatBox: React.FC = () => {
                         <button
                           key={index}
                           onClick={() => handleQuickReply(reply)}
-                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full transition-colors duration-200 border border-gray-200"
+                          className="text-xs px-2 py-1 bg-white hover:bg-gray-100 text-gray-700 rounded-full transition-colors duration-200 border border-gray-200 shadow-sm"
                         >
                           {reply}
                         </button>
@@ -662,7 +808,15 @@ const ChatBox: React.FC = () => {
                 )}
 
               {/* Input Area */}
-              <div className="p-4 border-t border-gray-200 bg-white rounded-b-xl">
+              <div className={`p-4 bg-white rounded-b-xl ${
+                conversation &&
+                conversation.status !== "closed" &&
+                messages.length === 0 &&
+                !isSending &&
+                newMessage.trim() === "" 
+                  ? "" 
+                  : "border-t border-gray-200"
+              }`}>
                 <form onSubmit={sendMessage} className="flex space-x-2">
                   <button
                     type="button"
