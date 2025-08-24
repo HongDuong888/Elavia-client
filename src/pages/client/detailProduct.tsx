@@ -58,7 +58,7 @@ const DetailProduct = ({ productId }: { productId: string }) => {
   const { data } = useQuery({
     queryKey: ["reviews", productId],
     queryFn: () =>
-      axiosInstance.get(`/reviews/${productId}`).then((res) => res.data),
+      axiosInstance.get(`/reviews/product/${productId}`).then((res) => res.data),
   });
   const reviews = data?.data || [];
   const totalReviews = reviews.length;
