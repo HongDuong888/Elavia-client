@@ -137,7 +137,7 @@ const Detail_order = () => {
       return;
     }
     addToCartMutation.mutate({
-      productVariantId: item.productVariantId?._id,
+      productVariantId: item.productInfo?._id,
       size: item.size,
       quantity: 1,
       userId: auth.user.id,
@@ -639,7 +639,7 @@ const Detail_order = () => {
                     onClick={() => setShowComplaintForm(true)}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                   >
-                    ⚠ Khiếu nại chưa nhận hàng
+                    ⚠ Khiếu nại đơn hàng
                   </button>
                 </div>
               )}

@@ -76,7 +76,7 @@ function App() {
     { path: "/order-follow/:id", element: <OrderFollow /> },
     { path: "/new-arrival/:gender", element: <NewArrivalProducts /> },
     {
-      path: "/spring-summer-collection/:gender",
+      path: "/bestsellingProducts/:gender",
       element: <NewArrivalProducts />,
     },
   ]);
