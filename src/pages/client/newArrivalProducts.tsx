@@ -10,11 +10,11 @@ const NewArrivalProducts = () => {
   const location = useLocation();
 
   let namespace = "";
-  if (location.pathname.startsWith("/spring-summer-collection")) {
+  if (location.pathname.startsWith("/bestsellingProducts")) {
     namespace =
       gender === "men"
-        ? "product-variants/spring-summer-collection/men"
-        : "product-variants/spring-summer-collection/women";
+        ? "product-variants/bestsellingProducts/men"
+        : "product-variants/bestsellingProducts/women";
   } else {
     namespace =
       gender === "men"
@@ -105,10 +105,10 @@ const NewArrivalProducts = () => {
     fetchProducts(1, { ...filters, sortBy: value });
   };
 
-  const isSpringSummer = location.pathname.startsWith("/spring-summer-collection");
+  const isSpringSummer = location.pathname.startsWith("/bestsellingProducts");
   const pageTitle = isSpringSummer
-    ? (gender === "men" ? "SPRING - SUMMER COLLECTION - NAM" : "SPRING - SUMMER COLLECTION - NỮ")
-    : (gender === "men" ? "NEW ARRIVAL - NAM" : "NEW ARRIVAL - NỮ");
+    ? (gender === "men" ? "SẢN PHẨM BÁN CHẠY - NAM" : "SẢN PHẨM BÁN CHẠY - NỮ")
+    : (gender === "men" ? "SẢN PHẨM MỚI - NAM" : "SẢN PHẨM MỚI - NỮ");
 
   // Sửa breadcrumb cho đúng từng trang
   const breadcrumb = [
@@ -116,8 +116,8 @@ const NewArrivalProducts = () => {
     <span className="mx-1" key="sep">-</span>,
     <span className="text-gray-800 font-medium" key="label">
       {isSpringSummer
-        ? (gender === "men" ? "SPRING - SUMMER COLLECTION - NAM" : "SPRING - SUMMER COLLECTION - NỮ")
-        : (gender === "men" ? "NEW ARRIVAL - NAM" : "NEW ARRIVAL - NỮ")}
+        ? (gender === "men" ? "SẢN PHẨM BÁN CHẠY - NAM" : "SẢN PHẨM BÁN CHẠY - NỮ")
+        : (gender === "men" ? "SẢN PHẨM MỚI - NAM" : "SẢN PHẨM MỚI - NỮ")}
     </span>
   ];
 
