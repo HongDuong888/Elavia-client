@@ -122,7 +122,6 @@ const handleGetSuggestion = async () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success("Cập nhật đánh giá thành công!");
       } else {
         res = await axiosInstance.post("/reviews", formData, {
           headers: {
@@ -130,21 +129,57 @@ const handleGetSuggestion = async () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        toast.success("Đánh giá thành công!");
       }
 
-      queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
-      onSuccess?.(res.data);
-
-      // Reset state
-      setRating(5);
-      setComment("");
-      setImages([]);
-      setPreviewUrls([]);
-      setExistingImages([]);
-      setRemovedImagePublicIds([]);
+      // Handle different status responses
+      const { status, message } = res.data;
+      
+      if (status === 'approved') {
+        toast.success(mode === "edit" ? "Cập nhật đánh giá thành công!" : "Đánh giá thành công!");
+        queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
+        onSuccess?.(res.data);
+        
+        // Reset state only if approved
+        setRating(5);
+        setComment("");
+        setImages([]);
+        setPreviewUrls([]);
+        setExistingImages([]);
+        setRemovedImagePublicIds([]);
+      } else if (status === 'pending') {
+        toast.info("Đánh giá của bạn đang được xem xét. Vui lòng chờ phê duyệt!");
+        queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
+        onSuccess?.(res.data);
+        
+        // Reset state for pending
+        setRating(5);
+        setComment("");
+        setImages([]);
+        setPreviewUrls([]);
+        setExistingImages([]);
+        setRemovedImagePublicIds([]);
+      } else {
+        // Fallback for backward compatibility
+        toast.success(mode === "edit" ? "Cập nhật đánh giá thành công!" : "Đánh giá thành công!");
+        queryClient.invalidateQueries({ queryKey: ["orders", orderId] });
+        onSuccess?.(res.data);
+        
+        // Reset state
+        setRating(5);
+        setComment("");
+        setImages([]);
+        setPreviewUrls([]);
+        setExistingImages([]);
+        setRemovedImagePublicIds([]);
+      }
     } catch (error: any) {
-       toast.error(error.response?.data?.message || "Gửi đánh giá thất bại!");
+      // Xử lý trường hợp AI từ chối (status 400)
+      if (error.response?.status === 400 && error.response?.data?.status === 'rejected') {
+        toast.error(error.response.data.message || "Đánh giá không thành công do có ngôn từ không phù hợp. Vui lòng chỉnh sửa và thử lại!");
+        // Không reset state để user có thể chỉnh sửa
+      } else {
+        toast.error(error.response?.data?.message || "Gửi đánh giá thất bại!");
+      }
     } finally {
       setLoading(false);
     }
