@@ -29,8 +29,8 @@ const Home = () => {
 
   const collectionNamespace =
     activeCollectionTab === "women"
-      ? "product-variants/spring-summer-collection/women"
-      : "product-variants/spring-summer-collection/men";  
+      ? "product-variants/bestsellingProducts/women"
+      : "product-variants/bestsellingProducts/men";  
 
   if (error) return <div>Lỗi tải dữ liệu: {error.message}</div>;
   if (isLoading) return <div>Đang tải...</div>;
@@ -69,7 +69,7 @@ const Home = () => {
 
           {/* NEW ARRIVAL Section */}
           <p className="text-center font-semibold text-xl sm:text-2xl md:text-3xl pt-8 md:pt-10">
-            NEW ARRIVAL
+            SẢN PHẨM MỚI
           </p>
           <div className="flex justify-center pb-6 md:pb-8 pt-2 md:pt-4">
             <button
@@ -78,7 +78,7 @@ const Home = () => {
               }`}
               onClick={() => setActiveTab("women")}
             >
-              ELA via
+              ELA nữ
             </button>
             <button
               className={`pl-3 md:pl-6 text-lg md:text-xl ${
@@ -86,7 +86,7 @@ const Home = () => {
               }`}
               onClick={() => setActiveTab("men")}
             >
-              Elavia men
+              Ela nam
             </button>
           </div>
 
@@ -107,7 +107,7 @@ const Home = () => {
 
           {/* FALL - WINTER COLLECTION Section */}
           <p className="text-center font-semibold text-xl sm:text-2xl md:text-3xl pb-1 sm:pb-2">
-            SPRING - SUMMER COLLECTION 2025
+            SẢN PHẨM BÁN CHẠY
           </p>
           <div className="flex justify-center pb-6 md:pb-8">
             <button
@@ -116,7 +116,7 @@ const Home = () => {
               }`}
               onClick={() => setActiveCollectionTab("women")}
             >
-              ELA via
+              ELA nữ
             </button>
             <button
               className={`pl-3 md:pl-6 text-lg md:text-xl ${
@@ -124,7 +124,7 @@ const Home = () => {
               }`}
               onClick={() => setActiveCollectionTab("men")}
             >
-              Elavia men
+              Ela nam
             </button>
           </div>
 
@@ -135,7 +135,7 @@ const Home = () => {
             <div
             className="p-2 sm:p-3 border border-black text-center w-28 sm:w-32 h-10 sm:h-12 mx-auto rounded-tl-[25px] rounded-br-[25px] mb-8 sm:mb-12 hover:bg-black hover:text-white transition-all duration-300 cursor-pointer flex items-center justify-center"
             onClick={() => {
-              window.location.href = `/spring-summer-collection/${activeCollectionTab}`;
+              window.location.href = `/bestsellingProducts/${activeCollectionTab}`;
             }}
           >
             <span className="text-sm sm:text-base">Xem tất cả</span>
