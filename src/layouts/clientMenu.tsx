@@ -100,14 +100,12 @@ const MenuClient = () => {
 
     setIsSearching(true);
     try {
-      const res = await fetch(
-        "http://localhost:5175/api/ai/search-suggestions",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: query.trim() }),
-        }
-      );
+      const endpoint = process.env.VITE_API_URL;
+      const res = await fetch(`${endpoint}/api/ai/search-suggestions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: query.trim() }),
+      });
       const data = await res.json();
 
       if (data.suggestions && data.suggestions.length > 0) {
@@ -375,7 +373,8 @@ const MenuClient = () => {
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-sm font-semibold text-red-600">
-                            {product.sizes?.[0]?.price?.toLocaleString("vi-VN")}₫
+                            {product.sizes?.[0]?.price?.toLocaleString("vi-VN")}
+                            ₫
                           </span>
                           <span className="text-xs text-gray-500">
                             {product.color?.colorName}
